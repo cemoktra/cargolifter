@@ -1,0 +1,15 @@
+{
+    "mirror": {
+        "remote_url": "./test/mirror-repo",
+        "clone_path": "./test/mirror-cloned"
+    },
+    "registry": {
+        "remote_url": "./test/registry-repo",
+        "clone_path": "./test/registry-cloned"
+    },
+    "storage_config": {
+        "type": "FileSystem",
+        "path": "./test/registry-storage"
+    },
+    "service_port": 8080
+}
