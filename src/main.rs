@@ -1,11 +1,14 @@
 use argh::FromArgs;
+use storage::FileSystemStorage;
 
-mod cargo;
 mod config;
 mod git;
 mod mirror;
+mod storage;
+mod web;
+mod tools;
 
-use crate::{config::cargolifter::CargoLifterConfig, git::GitService, mirror::MirrorService};
+use crate::{config::cargolifter::CargoLifterConfig, git::GitService, mirror::MirrorService, web::service::WebService};
 
 /// CargoLifter custom registry / crates.io mirror
 #[derive(FromArgs)]
@@ -43,21 +46,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => None,
     };
 
-    let mirror_join = if let Some(service) = mirror_service {
+    let _mirror_join = if let Some(service) = mirror_service {
         Some(service.run())
     } else {
         None
     };
 
-    // TODO: init storage
+    let storage = FileSystemStorage::new(&config.storage_config.path);
 
-    // // init cargo
-    // let cargo = CargoService::new(Arc::new(config), Arc::new(git));
-    // cargo.serve();
-
-    if let Some(mirror) = mirror_join {
-        mirror.await?;
-    }
+    // init web service
+    let web_service = WebService::new(mirror_git, registry_git, storage, config.service_port);
+    web_service.run().await;
 
     Ok(())
 }
