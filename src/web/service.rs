@@ -1,26 +1,23 @@
 use crate::{config::storage, git::GitService, storage::Storage};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
+use std::io::Read;
+use axum::http::StatusCode;
+use axum::response::Html;
 use axum::{AddExtensionLayer, Router, extract, handler::{get, put, delete}};
 
 pub struct WebService<T> {
-    state: Arc<WebServiceState<T>>,
+    mirror: Option<Arc<Mutex<GitService>>>,
+    registry: Option<Arc<Mutex<GitService>>>,
+    storage: Arc<RwLock<T>>,
     port: i32,
 }
 
-struct WebServiceState<T> {
-    mirror: Option<Arc<Mutex<GitService>>>,
-    registry: Option<Arc<Mutex<GitService>>>,
-    storage: T
-} 
-
-impl<T: 'static + Send + Sync + Storage> WebService<T> {
-    pub fn new(mirror: Option<Arc<Mutex<GitService>>>, registry: Option<Arc<Mutex<GitService>>>, storage: T, port: i32) -> Self {
+impl<T: 'static + Storage + Send + Sync> WebService<T> {
+    pub fn new(mirror: Option<Arc<Mutex<GitService>>>, registry: Option<Arc<Mutex<GitService>>>, storage: Arc<RwLock<T>>, port: i32) -> Self {
         Self {
-            state: Arc::new(WebServiceState {
-                mirror,
-                registry,
-                storage: storage
-            }),
+            mirror,
+            registry,
+            storage,
             port
         }
     }
@@ -34,7 +31,7 @@ impl<T: 'static + Send + Sync + Storage> WebService<T> {
             .route("/api/v1/crates/:name/owners", get(list_owners).put(add_owner).delete(remove_owner))
             .route("/api/v1/crates", get(search_registry))
             .route("/mirror/api/v1/crates", get(search_mirror))
-            .layer(AddExtensionLayer::new(self.state.clone()))
+            .layer(AddExtensionLayer::new(self.storage.clone()))
             ;
         
         let host = format!("0.0.0.0:{}", self.port);
@@ -48,25 +45,37 @@ impl<T: 'static + Send + Sync + Storage> WebService<T> {
     }
 }
 
-async fn download<T: Send + Sync + Storage>(extract::Path((crate_name, crate_version)): extract::Path<(String, String)>, state: extract::Extension<Arc<WebServiceState<T>>>) -> &'static str {
+async fn download<T: Storage>(extract::Path((crate_name, crate_version)): extract::Path<(String, String)>, storage: extract::Extension<Arc<RwLock<T>>>) -> Result<Vec<u8>, StatusCode> {
     log::info!("download endpoint called for {}={}", crate_name, crate_version);
 
-    let state = state.0;
-    let data = match state.storage.get(&crate_name, &crate_version) {
-        Ok(data) => data,
-        Err(e) => {
-            log::warn!("failed to read {}={} from storage! trying crates.io", crate_name, crate_version);
-            match surf::get(format!("https://crates.io/api/v1/crates/{}/{}/download", crate_name, crate_version)).send().await {
-                Ok(result) => todo!(),
-                Err(_) => {
-                    
-                },
-            };
-            Vec::new()
-        },
-    };
+    let mut storage = storage.write().map_err(|e| {
+        log::error!("Failed to get write lock on storage: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
-    "Hello World"
+    match storage.get(&crate_name, &crate_version) {
+        Ok(data) => Ok(data),
+        Err(_) => {
+            log::warn!("failed to read {}={} from storage! trying crates.io", crate_name, crate_version);
+            
+            let response = ureq::get(&format!("https://crates.io/api/v1/crates/{}/{}/download", crate_name, crate_version)).call().map_err(|e| {
+                log::error!("Failed to get crate from crates.io: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+            if response.has("Content-Length") {
+                let content_length = response.header("Content-Length").and_then(|s| s.parse::<usize>().ok()).unwrap_or_default();
+                let mut response_bytes: Vec<u8> = Vec::with_capacity(content_length);
+                response.into_reader()
+                    .read_to_end(&mut response_bytes).unwrap();
+                storage.put(&crate_name, &crate_version, &response_bytes).unwrap();
+
+                Ok(response_bytes)
+            } else {
+                log::error!("crates.io response has no content-length!");
+                Err(StatusCode::INTERNAL_SERVER_ERROR)
+            }
+        },
+    }
 }
 
 async fn publish() {

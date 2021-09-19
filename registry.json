@@ -9,7 +9,7 @@
     },
     "storage_config": {
         "type": "FileSystem",
-        "path": "./test/registry-storage"
+        "path": "./test/storage"
     },
     "service_port": 8080
 }

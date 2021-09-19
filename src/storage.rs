@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::Path;
 
 use crate::tools::crate_name_to_path;
@@ -36,6 +36,15 @@ impl Storage for FileSystemStorage {
     }
 
     fn put(&mut self, crate_name: &str, crate_version: &str, data: &Vec<u8>) -> Result<(), Box<dyn Error>> {
-        todo!()
+        let root_path = Path::new(&self.root_folder);
+        let path = root_path.join(crate_name_to_path(crate_name));
+        std::fs::create_dir_all(path.clone()).unwrap();
+        let path = path.join(format!("{}", crate_version));
+        log::info!("adding '{}' to storage", path.to_str().unwrap());
+
+        let mut file = std::fs::File::create(path)?;
+        file.write(&data)?;
+
+        Ok(())
     }
 }

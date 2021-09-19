@@ -1,5 +1,7 @@
 use argh::FromArgs;
 use storage::FileSystemStorage;
+use web::service::WebService;
+use std::sync::{Arc, RwLock};
 
 mod config;
 mod git;
@@ -8,7 +10,7 @@ mod storage;
 mod web;
 mod tools;
 
-use crate::{config::cargolifter::CargoLifterConfig, git::GitService, mirror::MirrorService, web::service::WebService};
+use crate::{config::cargolifter::CargoLifterConfig, git::GitService, mirror::MirrorService};
 
 /// CargoLifter custom registry / crates.io mirror
 #[derive(FromArgs)]
@@ -53,6 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let storage = FileSystemStorage::new(&config.storage_config.path);
+    let storage = Arc::new(RwLock::new(storage));
 
     // init web service
     let web_service = WebService::new(mirror_git, registry_git, storage, config.service_port);
