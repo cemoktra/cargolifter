@@ -1,3 +1,6 @@
+[![Build Status](https://github.com/cemoktra/cargolifter/workflows/ci/badge.svg)](https://github.com/cemoktra/cargolifter/actions)
+
+
 # CargoLifter #
 This project offers an implementation of a customer registry and/or crates.io mirror.
 
