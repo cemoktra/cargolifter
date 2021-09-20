@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/cemoktra/cargolifter/workflows/ci/badge.svg)](https://github.com/cemoktra/cargolifter/actions)
+[![Build Status](https://github.com/cemoktra/cargolifter/workflows/CI/badge.svg)](https://github.com/cemoktra/cargolifter/actions)
 
 
 # CargoLifter #
