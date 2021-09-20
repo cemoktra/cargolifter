@@ -1,8 +1,7 @@
-use crate::{config::storage, git::GitService, storage::Storage};
+use crate::{git::GitService, storage::Storage};
 use std::sync::{Arc, Mutex, RwLock};
 use std::io::Read;
 use axum::http::StatusCode;
-use axum::response::Html;
 use axum::{AddExtensionLayer, Router, extract, handler::{get, put, delete}};
 
 pub struct WebService<T> {
@@ -24,13 +23,15 @@ impl<T: 'static + Storage + Send + Sync> WebService<T> {
 
     pub async fn run(&self) {
         let app = Router::new()
-            .route("/api/v1/crates/:crate_name/:crate_version/download", get(download::<T>))
-            .route("/api/v1/crates/new", put(publish))
-            .route("/api/v1/crates/:name/:version/yank", delete(yank))
-            .route("/api/v1/crates/:name/:version/unyank", put(unyank))
-            .route("/api/v1/crates/:name/owners", get(list_owners).put(add_owner).delete(remove_owner))
-            .route("/api/v1/crates", get(search_registry))
-            .route("/mirror/api/v1/crates", get(search_mirror))
+            .route("/api/v1/crates/:crate_name/:crate_version/download", get(registry_download::<T>))
+            .route("/api/v1/mirror/:crate_name/:crate_version/download", get(mirror_download::<T>))
+
+            // .route("/api/v1/crates/new", put(publish))
+            // .route("/api/v1/crates/:name/:version/yank", delete(yank))
+            // .route("/api/v1/crates/:name/:version/unyank", put(unyank))
+            // .route("/api/v1/crates/:name/owners", get(list_owners).put(add_owner).delete(remove_owner))
+            // .route("/api/v1/crates", get(search_registry))
+            // .route("/mirror/api/v1/crates", get(search_mirror))
             .layer(AddExtensionLayer::new(self.storage.clone()))
             ;
         
@@ -45,29 +46,52 @@ impl<T: 'static + Storage + Send + Sync> WebService<T> {
     }
 }
 
-async fn download<T: Storage>(extract::Path((crate_name, crate_version)): extract::Path<(String, String)>, storage: extract::Extension<Arc<RwLock<T>>>) -> Result<Vec<u8>, StatusCode> {
-    log::info!("download endpoint called for {}={}", crate_name, crate_version);
+async fn registry_download<T: Storage>(extract::Path((crate_name, crate_version)): extract::Path<(String, String)>, storage: extract::Extension<Arc<RwLock<T>>>) -> Result<Vec<u8>, StatusCode> {
+    log::info!("requtested registry download of '{}' in version '{}'", crate_name, crate_version);
 
-    let mut storage = storage.write().map_err(|e| {
-        log::error!("Failed to get write lock on storage: {}", e);
+    let storage = storage.read().map_err(|e| {
+        log::error!("Failed to get read lock on storage: {}", e);
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    match storage.get(&crate_name, &crate_version) {
+    match storage.get(&crate_name, &crate_version, false) {
         Ok(data) => Ok(data),
         Err(_) => {
-            log::warn!("failed to read {}={} from storage! trying crates.io", crate_name, crate_version);
+            log::error!("failed to read '{}' version '{}' from storage!", crate_name, crate_version);
+            Err(StatusCode::NOT_FOUND)
+        },
+    }
+}
+
+async fn mirror_download<T: Storage>(extract::Path((crate_name, crate_version)): extract::Path<(String, String)>, storage: extract::Extension<Arc<RwLock<T>>>) -> Result<Vec<u8>, StatusCode> {
+    log::info!("requtested mirrored download of '{}' in version '{}'", crate_name, crate_version);
+
+    let storage_lock = storage.read().map_err(|e| {
+        log::error!("Failed to get read lock on storage: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    match storage_lock.get(&crate_name, &crate_version, true) {
+        Ok(data) => Ok(data),
+        Err(_) => {
+            log::warn!("failed to read '{}' version '{}' from storage! Trying crates.io ...", crate_name, crate_version);
             
             let response = ureq::get(&format!("https://crates.io/api/v1/crates/{}/{}/download", crate_name, crate_version)).call().map_err(|e| {
                 log::error!("Failed to get crate from crates.io: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
+                StatusCode::NOT_FOUND
             })?;
             if response.has("Content-Length") {
                 let content_length = response.header("Content-Length").and_then(|s| s.parse::<usize>().ok()).unwrap_or_default();
                 let mut response_bytes: Vec<u8> = Vec::with_capacity(content_length);
                 response.into_reader()
                     .read_to_end(&mut response_bytes).unwrap();
-                storage.put(&crate_name, &crate_version, &response_bytes).unwrap();
+
+                drop(storage_lock);
+                let mut storage_lock = storage.write().map_err(|e| {
+                    log::error!("Failed to get read lock on storage: {}", e);
+                    StatusCode::INTERNAL_SERVER_ERROR
+                })?;
+                storage_lock.put(&crate_name, &crate_version, true, &response_bytes).unwrap();
 
                 Ok(response_bytes)
             } else {
@@ -78,34 +102,34 @@ async fn download<T: Storage>(extract::Path((crate_name, crate_version)): extrac
     }
 }
 
-async fn publish() {
-    log::info!("publish endpoint called");
-}
+// async fn publish() {
+//     log::info!("publish endpoint called");
+// }
 
-async fn yank(extract::Path((crate_name, crate_version)): extract::Path<(String, String)>) {
-    log::info!("yank endpoint called for {}={}", crate_name, crate_version);
-}
+// async fn yank(extract::Path((crate_name, crate_version)): extract::Path<(String, String)>) {
+//     log::info!("yank endpoint called for {}={}", crate_name, crate_version);
+// }
 
-async fn unyank(extract::Path((crate_name, crate_version)): extract::Path<(String, String)>) {
-    log::info!("unyank endpoint called for {}={}", crate_name, crate_version);
-}
+// async fn unyank(extract::Path((crate_name, crate_version)): extract::Path<(String, String)>) {
+//     log::info!("unyank endpoint called for {}={}", crate_name, crate_version);
+// }
 
-async fn list_owners(extract::Path(crate_name): extract::Path<String>) {
-    log::info!("list owners called for {}", crate_name);
-}
+// async fn list_owners(extract::Path(crate_name): extract::Path<String>) {
+//     log::info!("list owners called for {}", crate_name);
+// }
 
-async fn add_owner(extract::Path(crate_name): extract::Path<String>) {
-    log::info!("add owner called for {}", crate_name);
-}
+// async fn add_owner(extract::Path(crate_name): extract::Path<String>) {
+//     log::info!("add owner called for {}", crate_name);
+// }
 
-async fn remove_owner(extract::Path(crate_name): extract::Path<String>) {
-    log::info!("remove owner called for {}", crate_name);
-}
+// async fn remove_owner(extract::Path(crate_name): extract::Path<String>) {
+//     log::info!("remove owner called for {}", crate_name);
+// }
 
-async fn search_registry() {
-    log::info!("search registry called");
-}
+// async fn search_registry() {
+//     log::info!("search registry called");
+// }
 
-async fn search_mirror() {
-    log::info!("search mirror called");
-}
+// async fn search_mirror() {
+//     log::info!("search mirror called");
+// }

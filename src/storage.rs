@@ -5,8 +5,8 @@ use std::path::Path;
 use crate::tools::crate_name_to_path;
 
 pub trait Storage {
-    fn get(&self, crate_name: &str, crate_version: &str) -> Result<Vec<u8>, Box<dyn Error>>;
-    fn put(&mut self, crate_name: &str, crate_version: &str, data: &Vec<u8>) -> Result<(), Box<dyn Error>>;
+    fn get(&self, crate_name: &str, crate_version: &str, mirror: bool) -> Result<Vec<u8>, Box<dyn Error>>;
+    fn put(&mut self, crate_name: &str, crate_version: &str, mirror: bool, data: &Vec<u8>) -> Result<(), Box<dyn Error>>;
 }
 
 pub struct FileSystemStorage {
@@ -22,9 +22,14 @@ impl FileSystemStorage {
 }
 
 impl Storage for FileSystemStorage {
-    fn get(&self, crate_name: &str, crate_version: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+    fn get(&self, crate_name: &str, crate_version: &str, mirror: bool) -> Result<Vec<u8>, Box<dyn Error>> {
         let root_path = Path::new(&self.root_folder);
-        let path = root_path.join(crate_name_to_path(crate_name));
+        let path = if mirror {
+            let mirror_path = root_path.join("mirror");
+            mirror_path.join(crate_name_to_path(crate_name))
+        } else {
+            root_path.join(crate_name_to_path(crate_name))
+        };
         let path = path.join(format!("{}", crate_version));
         log::info!("trying to get '{}'", path.to_str().unwrap());
 
@@ -35,9 +40,14 @@ impl Storage for FileSystemStorage {
         Ok(data)
     }
 
-    fn put(&mut self, crate_name: &str, crate_version: &str, data: &Vec<u8>) -> Result<(), Box<dyn Error>> {
+    fn put(&mut self, crate_name: &str, crate_version: &str, mirror: bool, data: &Vec<u8>) -> Result<(), Box<dyn Error>> {
         let root_path = Path::new(&self.root_folder);
-        let path = root_path.join(crate_name_to_path(crate_name));
+        let path = if mirror {
+            let mirror_path = root_path.join("mirror");
+            mirror_path.join(crate_name_to_path(crate_name))
+        } else {
+            root_path.join(crate_name_to_path(crate_name))
+        };
         std::fs::create_dir_all(path.clone()).unwrap();
         let path = path.join(format!("{}", crate_version));
         log::info!("adding '{}' to storage", path.to_str().unwrap());

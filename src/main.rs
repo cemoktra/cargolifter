@@ -54,11 +54,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None
     };
 
-    let storage = FileSystemStorage::new(&config.storage_config.path);
+    let storage = FileSystemStorage::new(&config.storage.path);
     let storage = Arc::new(RwLock::new(storage));
 
     // init web service
-    let web_service = WebService::new(mirror_git, registry_git, storage, config.service_port);
+    let web_service = WebService::new(mirror_git, registry_git, storage, config.service.port);
     web_service.run().await;
 
     Ok(())
