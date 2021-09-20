@@ -1,9 +1,14 @@
 use argh::FromArgs;
+use storage::FileSystemStorage;
+use web::service::WebService;
+use std::sync::{Arc, RwLock};
 
-mod cargo;
 mod config;
 mod git;
 mod mirror;
+mod storage;
+mod web;
+mod tools;
 
 use crate::{config::cargolifter::CargoLifterConfig, git::GitService, mirror::MirrorService};
 
@@ -43,21 +48,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => None,
     };
 
-    let mirror_join = if let Some(service) = mirror_service {
+    let _mirror_join = if let Some(service) = mirror_service {
         Some(service.run())
     } else {
         None
     };
 
-    // TODO: init storage
+    let storage = FileSystemStorage::new(&config.storage.path);
+    let storage = Arc::new(RwLock::new(storage));
 
-    // // init cargo
-    // let cargo = CargoService::new(Arc::new(config), Arc::new(git));
-    // cargo.serve();
-
-    if let Some(mirror) = mirror_join {
-        mirror.await?;
-    }
+    // init web service
+    let web_service = WebService::new(mirror_git, registry_git, storage, config.service.port);
+    web_service.run().await;
 
     Ok(())
 }

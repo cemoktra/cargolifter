@@ -7,9 +7,11 @@
         "remote_url": "./test/registry-repo",
         "clone_path": "./test/registry-cloned"
     },
-    "storage_config": {
+    "storage": {
         "type": "FileSystem",
-        "path": "./test/registry-storage"
+        "path": "./test/storage"
     },
-    "service_port": 8080
+    "service": {
+        "port": 8080
+    }
 }
