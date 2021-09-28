@@ -1,16 +1,18 @@
 use argh::FromArgs;
+use std::sync::{Arc, RwLock};
 use storage::FileSystemStorage;
 use web::service::WebService;
-use std::sync::{Arc, RwLock};
 
 mod config;
 mod git;
 mod mirror;
 mod storage;
-mod web;
 mod tools;
+mod web;
 
-use crate::{config::cargolifter::CargoLifterConfig, git::GitService, mirror::MirrorService};
+use crate::{
+    config::cargolifter::CargoLifterConfig, git::service::GitService, mirror::MirrorService,
+};
 
 /// CargoLifter custom registry / crates.io mirror
 #[derive(FromArgs)]

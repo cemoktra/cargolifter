@@ -1,4 +1,4 @@
-use crate::git::GitService;
+use crate::git::service::GitService;
 use std::sync::{Arc, Mutex};
 
 pub struct MirrorService {

@@ -53,6 +53,6 @@ The registry git repository must contain a prefilled `config.json` containing:
 ```json
 {
     "dl": "http://<hostname>:<port>/api/v1/crates",
-    "api": "http://<hostname>:<port>/"
+    "api": "http://<hostname>:<port>"
 }
 ```

@@ -5,24 +5,40 @@ use std::path::Path;
 use crate::tools::crate_name_to_path;
 
 pub trait Storage {
-    fn get(&self, crate_name: &str, crate_version: &str, mirror: bool) -> Result<Vec<u8>, Box<dyn Error>>;
-    fn put(&mut self, crate_name: &str, crate_version: &str, mirror: bool, data: &Vec<u8>) -> Result<(), Box<dyn Error>>;
+    fn get(
+        &self,
+        crate_name: &str,
+        crate_version: &str,
+        mirror: bool,
+    ) -> Result<Vec<u8>, Box<dyn Error>>;
+    fn put(
+        &mut self,
+        crate_name: &str,
+        crate_version: &str,
+        mirror: bool,
+        data: &Vec<u8>,
+    ) -> Result<(), Box<dyn Error>>;
 }
 
 pub struct FileSystemStorage {
-    root_folder: String
+    root_folder: String,
 }
 
 impl FileSystemStorage {
     pub fn new(root_folder: &str) -> Self {
         Self {
-            root_folder: root_folder.into()
+            root_folder: root_folder.into(),
         }
     }
 }
 
 impl Storage for FileSystemStorage {
-    fn get(&self, crate_name: &str, crate_version: &str, mirror: bool) -> Result<Vec<u8>, Box<dyn Error>> {
+    fn get(
+        &self,
+        crate_name: &str,
+        crate_version: &str,
+        mirror: bool,
+    ) -> Result<Vec<u8>, Box<dyn Error>> {
         let root_path = Path::new(&self.root_folder);
         let path = if mirror {
             let mirror_path = root_path.join("mirror");
@@ -40,7 +56,13 @@ impl Storage for FileSystemStorage {
         Ok(data)
     }
 
-    fn put(&mut self, crate_name: &str, crate_version: &str, mirror: bool, data: &Vec<u8>) -> Result<(), Box<dyn Error>> {
+    fn put(
+        &mut self,
+        crate_name: &str,
+        crate_version: &str,
+        mirror: bool,
+        data: &Vec<u8>,
+    ) -> Result<(), Box<dyn Error>> {
         let root_path = Path::new(&self.root_folder);
         let path = if mirror {
             let mirror_path = root_path.join("mirror");
