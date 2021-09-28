@@ -157,6 +157,14 @@ impl GitService {
         Ok(())
     }
 
+    fn crate_path(&self, crate_name: &str) -> PathBuf {
+        let crate_path = crate_name_to_path(crate_name);
+        let mut crate_path = self.repo.workdir().unwrap().join(crate_path);
+        std::fs::create_dir_all(crate_path.clone()).unwrap();
+        crate_path.push(crate_name);
+        crate_path
+    }
+
     pub fn pull_crates_io(&self) -> Result<(), Error> {
         let mut remote = match self.repo.find_remote("crates.io") {
             Ok(remote) => remote,
@@ -179,10 +187,7 @@ impl GitService {
     }
 
     pub fn publish(&self, request: &PublishRequest) -> Result<(), Error> {
-        let crate_path = crate_name_to_path(&request.meta.name);
-        let mut crate_path = self.repo.workdir().unwrap().join(crate_path);
-        std::fs::create_dir_all(crate_path.clone()).unwrap();
-        crate_path.push(&request.meta.name);
+        let crate_path = self.crate_path(&request.meta.name);
 
         log::info!("reading existing versions of crate '{}'", request.meta.name);
         let mut published_versions = self.read_versions(&crate_path)?;
@@ -204,6 +209,41 @@ impl GitService {
         self.commit(&format!(
             "published {} version {}",
             request.meta.name, request.meta.vers
+        ))?;
+        self.push("origin")
+    }
+
+    pub fn yank(&self, yank: bool, crate_name: &str, crate_version: &str) -> Result<(), Error> {
+        let crate_path = self.crate_path(&crate_version);
+
+        log::info!("reading existing versions of crate '{}'", crate_name);
+        let published_versions = self.read_versions(&crate_path)?;
+        log::info!(
+            "found {} versions of crate '{}'",
+            published_versions.len(),
+            crate_name
+        );
+
+        let mut updated_versions = HashSet::new();
+        for published_version in published_versions {
+            let mut updated_version = published_version;
+            if updated_version.vers == crate_version {
+                updated_version.yanked = yank;
+            }
+            updated_versions.insert(updated_version);
+        }
+
+        self.write_versions(&crate_path, &updated_versions)?;
+
+        let mut index = self.repo.index().unwrap();
+        index
+            .add_all(["*"].iter(), IndexAddOption::DEFAULT, None)
+            .unwrap();
+        index.write().unwrap();
+
+        self.commit(&format!(
+            "published {} version {}",
+            crate_name, crate_version
         ))?;
         self.push("origin")
     }

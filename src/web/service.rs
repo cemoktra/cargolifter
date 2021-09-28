@@ -1,8 +1,8 @@
 use crate::web::download::*;
 use crate::web::publish::*;
+use crate::web::yank::*;
 use crate::{git::service::GitService, storage::Storage};
 use axum::{
-    extract,
     handler::{delete, get, put},
     AddExtensionLayer, Router,
 };
@@ -15,7 +15,7 @@ pub struct MirrorGit(pub Option<Arc<Mutex<GitService>>>);
 pub struct RegistryGit(pub Option<Arc<Mutex<GitService>>>);
 
 pub struct WebService<T> {
-    mirror: MirrorGit,
+    // mirror: MirrorGit,
     registry: RegistryGit,
     storage: Arc<RwLock<T>>,
     port: i32,
@@ -23,13 +23,13 @@ pub struct WebService<T> {
 
 impl<T: 'static + Storage + Send + Sync> WebService<T> {
     pub fn new(
-        mirror: Option<Arc<Mutex<GitService>>>,
+        // mirror: Option<Arc<Mutex<GitService>>>,
         registry: Option<Arc<Mutex<GitService>>>,
         storage: Arc<RwLock<T>>,
         port: i32,
     ) -> Self {
         Self {
-            mirror: MirrorGit { 0: mirror },
+            // mirror: MirrorGit { 0: mirror },
             registry: RegistryGit { 0: registry },
             storage,
             port,
@@ -48,7 +48,7 @@ impl<T: 'static + Storage + Send + Sync> WebService<T> {
             )
             .route("/api/v1/crates/new", put(publish::<T>))
             .route("/api/v1/crates/:name/:version/yank", delete(yank))
-            // .route("/api/v1/crates/:name/:version/unyank", put(unyank))
+            .route("/api/v1/crates/:name/:version/unyank", put(unyank))
             // .route("/api/v1/crates/:name/owners", get(list_owners).put(add_owner).delete(remove_owner))
             // .route("/api/v1/crates", get(search_registry))
             // .route("/mirror/api/v1/crates", get(search_mirror))
@@ -65,18 +65,6 @@ impl<T: 'static + Storage + Send + Sync> WebService<T> {
             .unwrap();
     }
 }
-
-async fn yank(extract::Path((crate_name, crate_version)): extract::Path<(String, String)>) {
-    log::info!(
-        "requested yanking of {} version {}",
-        crate_name,
-        crate_version
-    );
-}
-
-// async fn unyank(extract::Path((crate_name, crate_version)): extract::Path<(String, String)>) {
-//     log::info!("unyank endpoint called for {}={}", crate_name, crate_version);
-// }
 
 // async fn list_owners(extract::Path(crate_name): extract::Path<String>) {
 //     log::info!("list owners called for {}", crate_name);

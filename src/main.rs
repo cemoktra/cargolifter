@@ -36,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config: CargoLifterConfig = serde_json::from_reader(std::io::BufReader::new(file))?;
 
     // init mirror git
-    let (mirror_git, mirror_service) = match config.mirror {
+    let (_mirror_git, mirror_service) = match config.mirror {
         Some(config) => {
             let git = GitService::from_config(&config)?;
             let mirror_service = MirrorService::new(git.clone());
@@ -60,7 +60,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let storage = Arc::new(RwLock::new(storage));
 
     // init web service
-    let web_service = WebService::new(mirror_git, registry_git, storage, config.service.port);
+    let web_service = WebService::new(registry_git, storage, config.service.port);
     web_service.run().await;
 
     Ok(())
