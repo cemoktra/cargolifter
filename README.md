@@ -30,7 +30,6 @@ Files that are mirrored will automatically put in a subfolder called `mirror`.
 "mirror": {
     "remote_url": "<url>",
     "clone_path": "<path>",
-    "public_key": "<path to public used for auth>",
     "username": "optional username for commits (defaults to cargolifter)",
     "email": "optional email for commits (defaults to git@cargolifter.com)"
 }
@@ -49,7 +48,6 @@ The mirror git repository must contain a prefilled `config.json` containing:
 "registry": {
     "remote_url": "<url>",
     "clone_path": "<path>",
-    "public_key": "<path to public used for auth>",
     "username": "optional username for commits (defaults to cargolifter)",
     "email": "optional email for commits (defaults to git@cargolifter.com)"
 }

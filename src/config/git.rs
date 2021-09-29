@@ -5,6 +5,5 @@ pub struct GitConfig {
     pub remote_url: String,
     pub clone_path: String,
     pub username: Option<String>,
-    pub email: Option<String>,
-    pub public_key: Option<String>,
+    pub email: Option<String>
 }

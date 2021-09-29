@@ -61,9 +61,7 @@ impl GitService {
         };
 
         let mut fetch_options = FetchOptions::new();
-        if let Some(public_key) = &config.public_key {
-            fetch_options.remote_callbacks(init_auth_callback(public_key));
-        }
+        fetch_options.remote_callbacks(init_auth_callback());
         let mut builder = RepoBuilder::new();
         builder.fetch_options(fetch_options);
         builder.clone(&config.remote_url, Path::new(&config.clone_path))
@@ -114,10 +112,7 @@ impl GitService {
         );
 
         let mut push_options = PushOptions::new();
-        if let Some(public_key) = &self.config.public_key {
-            push_options.remote_callbacks(init_auth_callback(public_key));
-        }
-
+        push_options.remote_callbacks(init_auth_callback());
         remote.push(
             &["refs/heads/master:refs/heads/master"],
             Some(&mut push_options),
@@ -199,9 +194,7 @@ impl GitService {
             remote.url().unwrap_or_default()
         );
         let mut fetch_options = FetchOptions::new();
-        if let Some(public_key) = &self.config.public_key {
-            fetch_options.remote_callbacks(init_auth_callback(public_key));
-        }
+        fetch_options.remote_callbacks(init_auth_callback());
         remote.fetch(&["master"], Some(&mut fetch_options), None)?;
 
         let fetch_head = self.repo.find_reference("FETCH_HEAD")?;
