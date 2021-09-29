@@ -104,6 +104,7 @@ impl GitService {
     }
 
     fn push(&self, remote_name: &str) -> Result<(), Error> {
+        let branch = self.config.branch.as_ref().unwrap_or(&String::from("master")).clone();
         let mut remote = self.repo.find_remote(remote_name)?;
         log::info!(
             "pushing to {} [{}]",
@@ -114,7 +115,7 @@ impl GitService {
         let mut push_options = PushOptions::new();
         push_options.remote_callbacks(init_auth_callback());
         remote.push(
-            &["refs/heads/master:refs/heads/master"],
+            &[format!("refs/heads/{}:refs/heads/{}", branch, branch)],
             Some(&mut push_options),
         )?;
         log::info!("successfully pushed to {}", remote_name);
@@ -122,14 +123,16 @@ impl GitService {
     }
 
     fn merge(&self, merge_commit: &AnnotatedCommit) -> Result<(), Error> {
+        let branch = self.config.branch.as_ref().unwrap_or(&String::from("master")).clone();
         let mut merge_options = MergeOptions::new();
         merge_options.file_favor(git2::FileFavor::Ours);
-        log::info!("merging '{}' into refs/heads/master", merge_commit.id());
+        log::info!("merging '{}' into refs/heads/{}", merge_commit.id(), branch);
         self.repo
             .merge(&[&merge_commit], Some(&mut merge_options), None)?;
         log::info!(
-            "successfully merged {} into refs/heads/master",
-            merge_commit.id()
+            "successfully merged {} into refs/heads/{}",
+            merge_commit.id(),
+            branch
         );
         self.repo.cleanup_state()?;
 
@@ -182,6 +185,7 @@ impl GitService {
     }
 
     pub fn pull_crates_io(&self) -> Result<(), Error> {
+        let branch = self.config.branch.as_ref().unwrap_or(&String::from("master")).clone();
         let mut remote = match self.repo.find_remote("crates.io") {
             Ok(remote) => remote,
             Err(_) => self.repo.remote(
@@ -190,12 +194,13 @@ impl GitService {
             )?,
         };
         log::info!(
-            "fetching master from crates.io [{}]",
+            "fetching {} from crates.io [{}]",
+            branch,
             remote.url().unwrap_or_default()
         );
         let mut fetch_options = FetchOptions::new();
         fetch_options.remote_callbacks(init_auth_callback());
-        remote.fetch(&["master"], Some(&mut fetch_options), None)?;
+        remote.fetch(&[branch], Some(&mut fetch_options), None)?;
 
         let fetch_head = self.repo.find_reference("FETCH_HEAD")?;
         let fetch_commit = self.repo.reference_to_annotated_commit(&fetch_head)?;
