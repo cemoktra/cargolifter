@@ -1,8 +1,9 @@
+use crate::git::callbacks::init_auth_callback;
 use crate::{
     config::git::GitConfig, git::model::PublishedVersion, tools::crate_name_to_path,
     web::publish::PublishRequest,
 };
-use git2::{AnnotatedCommit, Error, IndexAddOption, MergeOptions, Repository, Signature};
+use git2::{AnnotatedCommit, Error, FetchOptions, IndexAddOption, MergeOptions, PushOptions, Repository, Signature};
 use std::io::Write;
 use std::{
     collections::HashSet,
@@ -100,7 +101,13 @@ impl GitService {
             remote_name,
             remote.url().unwrap_or_default()
         );
-        remote.push(&["refs/heads/master:refs/heads/master"], None)?;
+
+        let mut push_options = PushOptions::new();
+        if let Some(public_key) = &self.config.public_key {
+            push_options.remote_callbacks(init_auth_callback(public_key));
+        }
+
+        remote.push(&["refs/heads/master:refs/heads/master"], Some(&mut push_options))?;
         log::info!("successfully pushed to {}", remote_name);
         Ok(())
     }
@@ -177,7 +184,11 @@ impl GitService {
             "fetching master from crates.io [{}]",
             remote.url().unwrap_or_default()
         );
-        remote.fetch(&["master"], None, None)?;
+        let mut fetch_options = FetchOptions::new();
+        if let Some(public_key) = &self.config.public_key {
+            fetch_options.remote_callbacks(init_auth_callback(public_key));
+        }
+        remote.fetch(&["master"], Some(&mut fetch_options), None)?;
 
         let fetch_head = self.repo.find_reference("FETCH_HEAD")?;
         let fetch_commit = self.repo.reference_to_annotated_commit(&fetch_head)?;
