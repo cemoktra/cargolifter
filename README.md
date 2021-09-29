@@ -2,14 +2,14 @@
 
 
 # CargoLifter #
-This project offers an implementation of a customer registry and/or crates.io mirror.
+This project offers an implementation of an alternate registry and/or crates.io mirror.
 
 ## Configuration ##
 Configuration is done via a JSON config file.
 
 ### Service ###
 ```json
-"service" {
+"service": {
     "port": 8080
 }
 ```
@@ -29,7 +29,10 @@ Files that are mirrored will automatically put in a subfolder called `mirror`.
 ```json
 "mirror": {
     "remote_url": "<url>",
-    "clone_path": "<path>"
+    "clone_path": "<path>",
+    "public_key": "<path to public used for auth>",
+    "username": "optional username for commits (defaults to cargolifter)",
+    "email": "optional email for commits (defaults to git@cargolifter.com)"
 }
 ```
 
@@ -45,7 +48,10 @@ The mirror git repository must contain a prefilled `config.json` containing:
 ```json
 "registry": {
     "remote_url": "<url>",
-    "clone_path": "<path>"
+    "clone_path": "<path>",
+    "public_key": "<path to public used for auth>",
+    "username": "optional username for commits (defaults to cargolifter)",
+    "email": "optional email for commits (defaults to git@cargolifter.com)"
 }
 ```
 
