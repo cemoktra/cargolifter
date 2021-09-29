@@ -1,6 +1,6 @@
 [package]
 name = "cargolifter"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["cemoktra <b.schubert82@gmail.com>"]
 edition = "2018"
 description = "CargoLifter alternative registry"

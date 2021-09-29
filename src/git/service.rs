@@ -3,8 +3,13 @@ use crate::{
     config::git::GitConfig, git::model::PublishedVersion, tools::crate_name_to_path,
     web::publish::PublishRequest,
 };
-use git2::{AnnotatedCommit, Error, FetchOptions, IndexAddOption, MergeOptions, PushOptions, Repository, Signature};
+use git2::build::RepoBuilder;
+use git2::{
+    AnnotatedCommit, Error, FetchOptions, IndexAddOption, MergeOptions, PushOptions, Repository,
+    Signature,
+};
 use std::io::Write;
+use std::path::Path;
 use std::{
     collections::HashSet,
     io::{BufRead, BufReader, BufWriter},
@@ -55,7 +60,13 @@ impl GitService {
             _ => {}
         };
 
-        Repository::clone(&config.remote_url, &config.clone_path)
+        let mut fetch_options = FetchOptions::new();
+        if let Some(public_key) = &config.public_key {
+            fetch_options.remote_callbacks(init_auth_callback(public_key));
+        }
+        let mut builder = RepoBuilder::new();
+        builder.fetch_options(fetch_options);
+        builder.clone(&config.remote_url, Path::new(&config.clone_path))
     }
 
     fn signature(&self) -> Result<Signature, Error> {
@@ -107,7 +118,10 @@ impl GitService {
             push_options.remote_callbacks(init_auth_callback(public_key));
         }
 
-        remote.push(&["refs/heads/master:refs/heads/master"], Some(&mut push_options))?;
+        remote.push(
+            &["refs/heads/master:refs/heads/master"],
+            Some(&mut push_options),
+        )?;
         log::info!("successfully pushed to {}", remote_name);
         Ok(())
     }
