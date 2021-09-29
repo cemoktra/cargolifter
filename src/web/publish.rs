@@ -95,7 +95,7 @@ pub async fn publish<T: Storage>(
                     match storage_lock.put(
                         &request.meta.name,
                         &request.meta.vers,
-                        true,
+                        false,
                         &request.data,
                     ) {
                         Ok(_) => Ok(()),
