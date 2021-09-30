@@ -1,12 +1,30 @@
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug)]
 pub enum StorageType {
-    FileSystem,
+    FileSystem(FileSystemConfig),
+    S3(S3Config),
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Clone, Deserialize, Debug)]
+pub struct FileSystemConfig {
+    pub path: String,
+}
+
+#[derive(Clone, Deserialize, Debug)]
+pub struct S3Config {
+    pub bucket: String,
+    pub credentials: Option<S3Credentials>,
+}
+
+#[derive(Clone, Deserialize, Debug)]
+pub struct S3Credentials {
+    pub access_key: String,
+    pub secret_key: String,
+    pub secret_token: Option<String>,
+}
+
+#[derive(Clone, Deserialize, Debug)]
 pub struct StorageConfig {
     pub r#type: StorageType,
-    pub path: String,
 }

@@ -1,8 +1,5 @@
 use crate::git::callbacks::init_auth_callback;
-use crate::{
-    config::git::GitConfig, git::model::PublishedVersion, tools::crate_name_to_path,
-    web::publish::PublishRequest,
-};
+use crate::{config::git::GitConfig, tools::crate_name_to_path, web::publish::PublishRequest};
 use git2::build::RepoBuilder;
 use git2::{
     AnnotatedCommit, Error, FetchOptions, IndexAddOption, MergeOptions, PushOptions, Repository,
@@ -14,22 +11,145 @@ use std::{
     collections::HashSet,
     io::{BufRead, BufReader, BufWriter},
     path::PathBuf,
-    sync::{Arc, Mutex},
 };
+use tokio::sync::mpsc::Sender;
+use tokio::task::JoinHandle;
 
-pub struct GitService {
+use super::model::PublishedVersion;
+
+pub enum GitMirrorCommand {
+    Mirror(tokio::sync::oneshot::Sender<bool>),
+}
+
+pub struct GitMirror;
+
+impl GitMirror {
+    pub fn run(config: &GitConfig) -> (JoinHandle<()>, Sender<GitMirrorCommand>) {
+        let (sender, mut receiver) = tokio::sync::mpsc::channel::<GitMirrorCommand>(16);
+
+        // TODO: this unwrap is bad
+        let repo = GitRepo::from_config(config).unwrap();
+        let handle = tokio::spawn(async move {
+            loop {
+                match receiver.recv().await {
+                    Some(command) => match command {
+                        GitMirrorCommand::Mirror(result_sender) => match repo.pull_crates_io() {
+                            Ok(_) => match result_sender.send(true) {
+                                Ok(_) => {}
+                                Err(_) => {
+                                    log::error!("Failed to send mirror result!");
+                                }
+                            },
+                            Err(e) => {
+                                log::error!("Publish failed: {}", e);
+                                match result_sender.send(false) {
+                                    Ok(_) => {}
+                                    Err(_) => {
+                                        log::error!("Failed to send mirror result!");
+                                    }
+                                }
+                            }
+                        },
+                    },
+                    None => {
+                        log::warn!("Did not receive a GitMirrorCommand!")
+                    }
+                }
+            }
+        });
+        (handle, sender)
+    }
+}
+
+pub enum GitRegistryCommand {
+    Publish(PublishRequest, tokio::sync::oneshot::Sender<bool>),
+    Yank(YankRequest),
+}
+
+pub struct YankRequest {
+    pub crate_name: String,
+    pub crate_version: String,
+    pub yank: bool,
+    pub result_sender: tokio::sync::oneshot::Sender<bool>,
+}
+
+pub struct GitRegistry;
+
+impl GitRegistry {
+    pub fn run(config: &GitConfig) -> (JoinHandle<()>, Sender<GitRegistryCommand>) {
+        let (sender, mut receiver) = tokio::sync::mpsc::channel::<GitRegistryCommand>(16);
+
+        let repo = GitRepo::from_config(config).unwrap();
+        let handle = tokio::spawn(async move {
+            loop {
+                match receiver.recv().await {
+                    Some(command) => match command {
+                        GitRegistryCommand::Publish(request, result_sender) => {
+                            match repo.publish(&request) {
+                                Ok(_) => match result_sender.send(true) {
+                                    Ok(_) => {}
+                                    Err(_) => {
+                                        log::error!("Failed to send publish result!");
+                                    }
+                                },
+                                Err(e) => {
+                                    log::error!("Publish failed: {}", e);
+                                    match result_sender.send(false) {
+                                        Ok(_) => {}
+                                        Err(_) => {
+                                            log::error!("Failed to send publish result!");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        GitRegistryCommand::Yank(request) => {
+                            match repo.yank(
+                                request.yank,
+                                &request.crate_name,
+                                &request.crate_version,
+                            ) {
+                                Ok(_) => match request.result_sender.send(true) {
+                                    Ok(_) => {}
+                                    Err(_) => {
+                                        log::error!("Failed to send yank result!");
+                                    }
+                                },
+                                Err(e) => {
+                                    log::error!("Publish failed: {}", e);
+                                    match request.result_sender.send(false) {
+                                        Ok(_) => {}
+                                        Err(_) => {
+                                            log::error!("Failed to send yank result!");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    None => {
+                        log::warn!("Did not receive a GitRegistryCommand!")
+                    }
+                }
+            }
+        });
+        (handle, sender)
+    }
+}
+
+pub struct GitRepo {
     repo: Repository,
     config: GitConfig,
 }
 
-impl GitService {
-    pub fn from_config(config: &GitConfig) -> Result<Arc<Mutex<GitService>>, Error> {
-        let mut service = GitService {
-            repo: GitService::init(config)?,
+impl GitRepo {
+    pub fn from_config(config: &GitConfig) -> Result<GitRepo, Error> {
+        let mut service = GitRepo {
+            repo: GitRepo::init(config)?,
             config: config.clone(),
         };
         service.configure(config)?;
-        Ok(Arc::new(Mutex::new(service)))
+        Ok(service)
     }
 
     fn configure(&mut self, registry_config: &GitConfig) -> Result<(), Error> {
@@ -104,7 +224,12 @@ impl GitService {
     }
 
     fn push(&self, remote_name: &str) -> Result<(), Error> {
-        let branch = self.config.branch.as_ref().unwrap_or(&String::from("master")).clone();
+        let branch = self
+            .config
+            .branch
+            .as_ref()
+            .unwrap_or(&String::from("master"))
+            .clone();
         let mut remote = self.repo.find_remote(remote_name)?;
         log::info!(
             "pushing to {} [{}]",
@@ -123,7 +248,12 @@ impl GitService {
     }
 
     fn merge(&self, merge_commit: &AnnotatedCommit) -> Result<(), Error> {
-        let branch = self.config.branch.as_ref().unwrap_or(&String::from("master")).clone();
+        let branch = self
+            .config
+            .branch
+            .as_ref()
+            .unwrap_or(&String::from("master"))
+            .clone();
         let mut merge_options = MergeOptions::new();
         merge_options.file_favor(git2::FileFavor::Ours);
         log::info!("merging '{}' into refs/heads/{}", merge_commit.id(), branch);
@@ -185,7 +315,12 @@ impl GitService {
     }
 
     pub fn pull_crates_io(&self) -> Result<(), Error> {
-        let branch = self.config.branch.as_ref().unwrap_or(&String::from("master")).clone();
+        let branch = self
+            .config
+            .branch
+            .as_ref()
+            .unwrap_or(&String::from("master"))
+            .clone();
         let mut remote = match self.repo.find_remote("crates.io") {
             Ok(remote) => remote,
             Err(_) => self.repo.remote(
@@ -219,7 +354,7 @@ impl GitService {
             published_versions.len(),
             request.meta.name
         );
-        published_versions.insert(request.meta.clone().into());
+        published_versions.insert(request.clone().into());
 
         self.write_versions(&crate_path, &published_versions)?;
 
@@ -237,7 +372,7 @@ impl GitService {
     }
 
     pub fn yank(&self, yank: bool, crate_name: &str, crate_version: &str) -> Result<(), Error> {
-        let crate_path = self.crate_path(&crate_version);
+        let crate_path = self.crate_path(&crate_name);
 
         log::info!("reading existing versions of crate '{}'", crate_name);
         let published_versions = self.read_versions(&crate_path)?;

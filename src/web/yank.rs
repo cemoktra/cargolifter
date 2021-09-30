@@ -1,6 +1,9 @@
-use crate::web::service::RegistryGit;
+use std::sync::Arc;
+
+use crate::git::service::{GitRegistryCommand, YankRequest};
 use axum::{extract, Json};
 use serde::Serialize;
+use tokio::sync::{mpsc::Sender, oneshot};
 
 #[derive(Clone, Debug, Serialize)]
 pub struct YankResult {
@@ -9,7 +12,7 @@ pub struct YankResult {
 
 pub async fn yank(
     extract::Path((crate_name, crate_version)): extract::Path<(String, String)>,
-    git: extract::Extension<RegistryGit>,
+    git: extract::Extension<Arc<Sender<GitRegistryCommand>>>,
 ) -> Json<YankResult> {
     // TODO: check auth
     log::info!(
@@ -18,23 +21,29 @@ pub async fn yank(
         crate_version
     );
 
-    let git = git.0;
-    match git.0 {
-        Some(git) => match git.lock() {
-            Ok(git) => match git.yank(true, &crate_name, &crate_version) {
-                Ok(_) => Json(YankResult { ok: true }),
-                Err(_) => {
-                    log::error!("yanking failed");
+    let (tx, rx) = oneshot::channel::<bool>();
+    let request = YankRequest {
+        crate_name,
+        crate_version,
+        yank: true,
+        result_sender: tx,
+    };
+    match git.send(GitRegistryCommand::Yank(request)).await {
+        Ok(_) => match rx.await {
+            Ok(result) => {
+                if result {
+                    Json(YankResult { ok: true })
+                } else {
                     Json(YankResult { ok: false })
                 }
-            },
-            Err(_) => {
-                log::error!("cannot get lock in git repo");
+            }
+            Err(e) => {
+                log::error!("Failed to receive git response: {}", e);
                 Json(YankResult { ok: false })
             }
         },
-        None => {
-            log::error!("cannot access git repo");
+        Err(e) => {
+            log::error!("Failed to send git command: {}", e);
             Json(YankResult { ok: false })
         }
     }
@@ -42,7 +51,7 @@ pub async fn yank(
 
 pub async fn unyank(
     extract::Path((crate_name, crate_version)): extract::Path<(String, String)>,
-    git: extract::Extension<RegistryGit>,
+    git: extract::Extension<Arc<Sender<GitRegistryCommand>>>,
 ) -> Json<YankResult> {
     // TODO: check auth
     log::info!(
@@ -51,23 +60,29 @@ pub async fn unyank(
         crate_version
     );
 
-    let git = git.0;
-    match git.0 {
-        Some(git) => match git.lock() {
-            Ok(git) => match git.yank(false, &crate_name, &crate_version) {
-                Ok(_) => Json(YankResult { ok: true }),
-                Err(_) => {
-                    log::error!("yanking failed");
+    let (tx, rx) = oneshot::channel::<bool>();
+    let request = YankRequest {
+        crate_name,
+        crate_version,
+        yank: false,
+        result_sender: tx,
+    };
+    match git.send(GitRegistryCommand::Yank(request)).await {
+        Ok(_) => match rx.await {
+            Ok(result) => {
+                if result {
+                    Json(YankResult { ok: true })
+                } else {
                     Json(YankResult { ok: false })
                 }
-            },
-            Err(_) => {
-                log::error!("cannot get lock in git repo");
+            }
+            Err(e) => {
+                log::error!("Failed to receive git response: {}", e);
                 Json(YankResult { ok: false })
             }
         },
-        None => {
-            log::error!("cannot access git repo");
+        Err(e) => {
+            log::error!("Failed to send git command: {}", e);
             Json(YankResult { ok: false })
         }
     }

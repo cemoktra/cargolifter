@@ -15,15 +15,34 @@ Configuration is done via a JSON config file.
 ```
 
 ### Storage ###
+FileSystem storage configuration:
 ```json
 "storage": {
-    "type": "FileSystem",
-    "path": "<path>"
+    "type": {
+        "FileSystem": {
+            "path": "<path>"
+        }
+    }
+}
+```
+
+S3 storage configuration (you may omit the `credentials` for S3 access as it will default to the environment variables):
+```json
+"storage": {
+    "type": {
+        "S3": {
+            "bucket": "<bucket name>",
+            "credentials": {
+                "access_key": "<access key>",
+                "secret_key": "<secret key>",
+                "secret_token": "<optional secret token>",
+            }
+        }
+    }
 }
 ```
 
 Files that are mirrored will automatically put in a subfolder called `mirror`.
-
 
 ### Mirror ###
 ```json
