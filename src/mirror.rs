@@ -1,31 +1,28 @@
-use crate::git::service::GitService;
-use std::sync::{Arc, Mutex};
+use tokio::sync::mpsc::Sender;
 
-pub struct MirrorService {
-    git: Arc<Mutex<GitService>>,
-}
+use crate::git::service::GitMirrorCommand;
+
+pub struct MirrorService;
 
 impl MirrorService {
-    pub fn new(git: Arc<Mutex<GitService>>) -> Self {
-        Self { git }
-    }
-
-    pub fn run(&self) -> tokio::task::JoinHandle<()> {
-        let git = self.git.clone();
+    pub fn run(sender: Sender<GitMirrorCommand>) -> tokio::task::JoinHandle<()> {
         tokio::task::spawn(async move {
             loop {
                 log::info!("syncing with crates.io");
-                match git.lock() {
-                    Ok(lock) => match lock.pull_crates_io() {
-                        Ok(_) => {}
+                let (tx, rx) = tokio::sync::oneshot::channel::<bool>();
+                match sender.send(GitMirrorCommand::Mirror(tx)).await {
+                    Ok(_) => match rx.await {
+                        Ok(result) => {
+                            log::info!("mirror completed with result: {}", result);
+                        }
                         Err(e) => {
-                            log::error!("failed to mirror crates.io: {}", e)
+                            log::error!("failed to receive mirror result: {}", e)
                         }
                     },
                     Err(e) => {
-                        log::error!("failed to receive lock on mirror repo: {}", e)
+                        log::error!("failed to send mirror command: {}", e)
                     }
-                };
+                }
                 tokio::time::sleep(tokio::time::Duration::from_secs(1800)).await;
             }
         })

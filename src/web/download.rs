@@ -1,12 +1,13 @@
-use crate::storage::Storage;
+use crate::storage::{GetRequest, MirrorGetRequest, StorageCommand};
 use axum::extract;
 use axum::http::StatusCode;
-use std::io::Read;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use tokio::sync::mpsc::Sender;
+use tokio::sync::oneshot;
 
-pub async fn registry_download<T: Storage>(
+pub async fn registry_download(
     extract::Path((crate_name, crate_version)): extract::Path<(String, String)>,
-    storage: extract::Extension<Arc<RwLock<T>>>,
+    storage: extract::Extension<Arc<Sender<StorageCommand>>>,
 ) -> Result<Vec<u8>, StatusCode> {
     log::info!(
         "requtested registry download of '{}' in version '{}'",
@@ -14,82 +15,62 @@ pub async fn registry_download<T: Storage>(
         crate_version
     );
 
-    let storage = storage.read().map_err(|e| {
-        log::error!("Failed to get read lock on storage: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let (tx, rx) = oneshot::channel::<Option<Vec<u8>>>();
+    let request = GetRequest {
+        crate_name: crate_name.into(),
+        crate_version: crate_version.into(),
+        result_sender: tx,
+    };
 
-    match storage.get(&crate_name, &crate_version, false) {
-        Ok(data) => Ok(data),
-        Err(_) => {
-            log::error!(
-                "failed to read '{}' version '{}' from storage!",
-                crate_name,
-                crate_version
-            );
-            Err(StatusCode::NOT_FOUND)
+    match storage.send(StorageCommand::Get(request)).await {
+        Ok(_) => match rx.await {
+            Ok(result) => match result {
+                Some(data) => Ok(data),
+                None => Err(StatusCode::NOT_FOUND),
+            },
+            Err(e) => {
+                log::error!("Failed to receive storage response: {}", e);
+                Err(StatusCode::INTERNAL_SERVER_ERROR)
+            }
+        },
+        Err(e) => {
+            log::error!("Failed to send storage request: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
     }
 }
 
-pub async fn mirror_download<T: Storage>(
+pub async fn mirror_download(
     extract::Path((crate_name, crate_version)): extract::Path<(String, String)>,
-    storage: extract::Extension<Arc<RwLock<T>>>,
+    storage: extract::Extension<Arc<Sender<StorageCommand>>>,
 ) -> Result<Vec<u8>, StatusCode> {
     log::info!(
-        "requtested mirrored download of '{}' in version '{}'",
+        "requested mirrored download of '{}' in version '{}'",
         crate_name,
         crate_version
     );
 
-    let storage_lock = storage.read().map_err(|e| {
-        log::error!("Failed to get read lock on storage: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let (tx, rx) = oneshot::channel::<Option<Vec<u8>>>();
+    let request = MirrorGetRequest {
+        crate_name: crate_name.into(),
+        crate_version: crate_version.into(),
+        result_sender: tx,
+    };
 
-    match storage_lock.get(&crate_name, &crate_version, true) {
-        Ok(data) => Ok(data),
-        Err(_) => {
-            log::warn!(
-                "failed to read '{}' version '{}' from storage! Trying crates.io ...",
-                crate_name,
-                crate_version
-            );
-
-            let response = ureq::get(&format!(
-                "https://crates.io/api/v1/crates/{}/{}/download",
-                crate_name, crate_version
-            ))
-            .call()
-            .map_err(|e| {
-                log::error!("Failed to get crate from crates.io: {}", e);
-                StatusCode::NOT_FOUND
-            })?;
-            if response.has("Content-Length") {
-                let content_length = response
-                    .header("Content-Length")
-                    .and_then(|s| s.parse::<usize>().ok())
-                    .unwrap_or_default();
-                let mut response_bytes: Vec<u8> = Vec::with_capacity(content_length);
-                response
-                    .into_reader()
-                    .read_to_end(&mut response_bytes)
-                    .unwrap();
-
-                drop(storage_lock);
-                let mut storage_lock = storage.write().map_err(|e| {
-                    log::error!("Failed to get write lock on storage: {}", e);
-                    StatusCode::INTERNAL_SERVER_ERROR
-                })?;
-                storage_lock
-                    .put(&crate_name, &crate_version, true, &response_bytes)
-                    .unwrap();
-
-                Ok(response_bytes)
-            } else {
-                log::error!("crates.io response has no content-length!");
+    match storage.send(StorageCommand::MirrorGet(request)).await {
+        Ok(_) => match rx.await {
+            Ok(result) => match result {
+                Some(data) => Ok(data),
+                None => Err(StatusCode::NOT_FOUND),
+            },
+            Err(e) => {
+                log::error!("Failed to receive storage response: {}", e);
                 Err(StatusCode::INTERNAL_SERVER_ERROR)
             }
+        },
+        Err(e) => {
+            log::error!("Failed to send storage request: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
     }
 }

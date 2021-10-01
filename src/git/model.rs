@@ -1,5 +1,6 @@
-use crate::web::publish::{Dependency, MetaData};
+use crate::web::publish::{Dependency, PublishRequest};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::{collections::HashMap, hash::Hash};
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -42,16 +43,24 @@ pub struct PublishedVersion {
     pub links: Option<String>,
 }
 
-impl std::convert::From<MetaData> for PublishedVersion {
-    fn from(meta: MetaData) -> Self {
+impl std::convert::From<&PublishRequest> for PublishedVersion {
+    fn from(req: &PublishRequest) -> Self {
+        let cksum = Sha256::digest(&req.data);
+
         Self {
-            name: meta.name,
-            vers: meta.vers,
-            deps: meta.deps.into_iter().map(|dep| dep.into()).collect(),
-            cksum: String::new(), // TODO
-            features: meta.features,
+            name: req.meta.name.clone(),
+            vers: req.meta.vers.clone(),
+            deps: req
+                .meta
+                .deps
+                .clone()
+                .into_iter()
+                .map(|dep| dep.into())
+                .collect(),
+            cksum: hex::encode(cksum),
+            features: req.meta.features.clone(),
             yanked: false,
-            links: meta.links,
+            links: req.meta.links.clone(),
         }
     }
 }

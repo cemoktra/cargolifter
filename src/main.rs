@@ -1,6 +1,7 @@
 use argh::FromArgs;
-use std::sync::{Arc, RwLock};
-use storage::FileSystemStorage;
+use futures::join;
+use git::service::{GitMirror, GitRegistry};
+use storage::StorageService;
 use web::service::WebService;
 
 mod config;
@@ -11,7 +12,9 @@ mod tools;
 mod web;
 
 use crate::{
-    config::cargolifter::CargoLifterConfig, git::service::GitService, mirror::MirrorService,
+    config::cargolifter::CargoLifterConfig,
+    git::service::{GitMirrorCommand, GitRegistryCommand},
+    mirror::MirrorService,
 };
 
 /// CargoLifter custom registry / crates.io mirror
@@ -36,32 +39,54 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config: CargoLifterConfig = serde_json::from_reader(std::io::BufReader::new(file))?;
 
     // init mirror git
-    let (_mirror_git, mirror_service) = match config.mirror {
+    let (mirror_git_handle, mirror_git_sender, mirror_service) = match config.mirror {
         Some(config) => {
-            let git = GitService::from_config(&config)?;
-            let mirror_service = MirrorService::new(git.clone());
-            (Some(git), Some(mirror_service))
+            let (git_mirror_handle, mirror_sender) = GitMirror::run(&config);
+            let mirror_run_handle = MirrorService::run(mirror_sender.clone());
+            (
+                Some(git_mirror_handle),
+                mirror_sender,
+                Some(mirror_run_handle),
+            )
         }
-        None => (None, None),
-    };
-    // init registry git
-    let registry_git = match config.registry {
-        Some(config) => Some(GitService::from_config(&config)?),
-        None => None,
+        None => {
+            let (sender, _) = tokio::sync::mpsc::channel::<GitMirrorCommand>(1);
+            (None, sender, None)
+        }
     };
 
-    let _mirror_join = if let Some(service) = mirror_service {
-        Some(service.run())
-    } else {
-        None
+    let (git_registry_handle, git_registry_sender) = match config.registry {
+        Some(config) => {
+            let (handle, sender) = GitRegistry::run(&config);
+            (Some(handle), sender)
+        }
+        None => {
+            let (sender, _) = tokio::sync::mpsc::channel::<GitRegistryCommand>(1);
+            (None, sender)
+        }
     };
 
-    let storage = FileSystemStorage::new(&config.storage.path);
-    let storage = Arc::new(RwLock::new(storage));
+    let (storage_handle, storage_sender) = StorageService::run(config.storage.clone());
 
     // init web service
-    let web_service = WebService::new(registry_git, storage, config.service.port);
+    let web_service = WebService::new(
+        mirror_git_sender,
+        git_registry_sender,
+        storage_sender,
+        config.service.port,
+    );
     web_service.run().await;
+
+    if let Some(handle) = mirror_service {
+        join!(handle).0.unwrap();
+    }
+    if let Some(handle) = mirror_git_handle {
+        join!(handle).0.unwrap();
+    }
+    if let Some(handle) = git_registry_handle {
+        join!(handle).0.unwrap();
+    }
+    join!(storage_handle).0.unwrap();
 
     Ok(())
 }
