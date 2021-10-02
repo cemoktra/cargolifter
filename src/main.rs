@@ -4,6 +4,7 @@ use git::service::{GitMirror, GitRegistry};
 use storage::StorageService;
 use web::service::WebService;
 
+mod auth;
 mod config;
 mod git;
 mod mirror;
