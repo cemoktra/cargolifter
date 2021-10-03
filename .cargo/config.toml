@@ -4,6 +4,3 @@ registry = { index = "file:///home/bastian/code/cargo-registry/test/registry-rep
 
 [term]
 verbose = false
-
-[net]
-git-fetch-with-cli = true 
