@@ -17,6 +17,6 @@ pub async fn create_file(
         .send()
         .await?
         .error_for_status()?
-        .json::<crate::models::create_file::Response>()
+        .json()
         .await
 }

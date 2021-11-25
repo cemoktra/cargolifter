@@ -16,6 +16,6 @@ pub async fn update_file(
         .send()
         .await?
         .error_for_status()?
-        .json::<crate::models::update_file::Response>()
+        .json()
         .await
 }

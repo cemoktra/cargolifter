@@ -72,12 +72,28 @@ impl Backend for Gitlab {
             source_branch: branch_name.clone(),
             target_branch: "main".into(), // TODO: make configurable
             title: format!("{}-{}", request.meta.name, request.meta.vers),
+            remove_source_branch: Some(true),
             ..Default::default()
         };
         match api::create_merge_request(token, self.project_id, &merge_request).await {
             Ok(response) => {
-                println!("{}", response);
-                Ok(())
+                let accept_request = models::accept_merge_request::Request {
+                    should_remove_source_branch: Some(true),
+                    ..Default::default()
+                };
+
+                // TODO: use cargo lifter token here
+                match api::accept_merge_request(token, self.project_id, response.iid, &accept_request).await {
+                    Ok(_) => {
+                        tracing::info!("{} publishes successfully", crate_path);
+                        Ok(())
+                    },
+                    Err(e) => {
+                        tracing::error!("failed to accept MR - deleting branch");
+                        api::delete_branch(token, self.project_id, &branch_name).await?;
+                        Err(e)
+                    }
+                }
             }
             Err(e) => {
                 tracing::error!("failed to create MR - deleting branch");

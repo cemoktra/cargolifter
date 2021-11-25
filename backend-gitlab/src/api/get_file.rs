@@ -13,6 +13,6 @@ pub async fn get_file(
         .header("PRIVATE-TOKEN", token)
         .send()
         .await?
-        .json::<crate::models::get_file::Response>()
+        .json()
         .await
 }
