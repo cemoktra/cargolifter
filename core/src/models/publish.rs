@@ -44,23 +44,8 @@ pub struct PublishRequest {
 }
 
 impl MetaData {
-    pub fn crate_path(&self) -> String {
-        match self.name.len() {
-            1 => "1".into(),
-            2 => "2".into(),
-            3 => format!("3/{}", self.name[0..1].to_string()),
-            _ => {
-                format!(
-                    "{}/{}",
-                    self.name[0..2].to_string(),
-                    self.name[2..4].to_string()
-                )
-            }
-        }
-    }
-
     pub fn crate_file_path(&self) -> String {
-        format!("{}/{}", self.crate_path(), self.name)
+        crate::get_crate_file_path(&self.name)
     }
 }
 

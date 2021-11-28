@@ -1,7 +1,10 @@
 [workspace]
 members = [    
+    "backend-github",
     "backend-gitlab",
     "cargolifter",
+    "storage-filesystem",
+    "storage-s3",
     "core",
     "web"
 ]

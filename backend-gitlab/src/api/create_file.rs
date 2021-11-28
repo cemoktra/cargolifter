@@ -7,7 +7,7 @@ pub async fn create_file(
     let url = format!(
         "https://gitlab.com/api/v4/projects/{}/repository/files/{}",
         project_id,
-        file.replace("/", "%2F")
+        urlencoding::encode(file)
     );
     let client = reqwest::Client::new();
     client

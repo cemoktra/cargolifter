@@ -1,0 +1,15 @@
+[package]
+name = "cargolifter-storage-s3"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1"
+aws-config = "0.0.26-alpha"
+aws-sdk-s3 = "0.0.26-alpha"
+aws-types = "0.0.26-alpha"
+bytes = "1.1"
+cargolifter-core = { path = "../core" }
+tracing = "0.1"
