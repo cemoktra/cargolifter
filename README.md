@@ -81,3 +81,28 @@ The registry git repository must contain a prefilled `config.json` containing:
     "api": "http://<hostname>:<port>"
 }
 ```
+
+### Example Config ###
+
+```json
+{
+    "backend": {
+        "type": {
+            "Github": {
+                "owner": "cemoktra",
+                "repo": "my-private-crates",
+            }
+        }
+    },
+    "web": {
+        "port": 8080
+    },
+    "storage": {
+        "type": {
+            "FileSystem": {
+                "path": "./test/storage"
+            }
+        }
+    }
+}
+```
