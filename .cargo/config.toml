@@ -1,9 +1,0 @@
-[registries]
-mirror = { index = "file:///home/bastian/code/cargo-registry/test/mirror-repo" }
-registry = { index = "file:///home/bastian/code/cargo-registry/test/registry-repo" }
-
-[term]
-verbose = false
-
-[net]
-git-fetch-with-cli = true 

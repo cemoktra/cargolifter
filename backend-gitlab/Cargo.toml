@@ -1,0 +1,17 @@
+[package]
+name = "cargolifter-backend-gitlab"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1"
+base64 = "0.13"
+cargolifter-core = { path = "../core" }
+reqwest = { version = "0.11", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.14.0", features = ["full"] }
+tracing = "0.1"
+urlencoding = "2.1"

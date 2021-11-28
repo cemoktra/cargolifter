@@ -2,14 +2,27 @@
 
 
 # CargoLifter #
-This project offers an implementation of an alternate registry and/or crates.io mirror.
+This project offers an implementation of an alternate registry. Instead of having it's own auth mechanism it uses existing source control providers logins. Those are:
+
+- Github
+- Gitlab (planned)
+
+CargoLifter uses access tokens for interacting with the backend. So each action will be impersonated. This of course requires write access and this is the way to limit.
+
+## Cargo Login ##
+### Github ###
+Use a combination of u sername and personal access token like this: `<username>:<token>`
+
+### Gitlab ###
+Use your gitlab access token as cargo login token.
+
 
 ## Configuration ##
 Configuration is done via a JSON config file.
 
 ### Service ###
 ```json
-"service": {
+"web": {
     "port": 8080
 }
 ```
@@ -44,33 +57,20 @@ S3 storage configuration (you may omit the `credentials` for S3 access as it wil
 
 Files that are mirrored will automatically put in a subfolder called `mirror`.
 
-### Mirror ###
-```json
-"mirror": {
-    "remote_url": "<url>",
-    "clone_path": "<path>",
-    "username": "optional username for commits (defaults to cargolifter)",
-    "email": "optional email for commits (defaults to git@cargolifter.com)",
-    "branch": "optional: defaults to master"
-}
-```
 
-The mirror git repository must contain a prefilled `config.json` containing:
-```json
-{
-    "dl": "http://<hostname>:<port>/api/v1/mirror",
-    "api": "http://<hostname>:<port>/mirror"
-}
-```
+### Backend ###
+Currently the default branch must be named "main" but this will be configurable in the future.
 
-### Registry ###
 ```json
-"registry": {
-    "remote_url": "<url>",
-    "clone_path": "<path>",
-    "username": "optional username for commits (defaults to cargolifter)",
-    "email": "optional email for commits (defaults to git@cargolifter.com)",
-    "branch": "optional: defaults to master"
+"backend": {
+    "type": {
+        "Github": {
+            "owner": "<username>",
+            "repo": "<repository>",
+            "host": "<for future when hosting custom instance>",
+            "cargolifter_token": "<a token to use to merge pull requests>"
+        }
+    }
 }
 ```
 
