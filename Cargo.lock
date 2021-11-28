@@ -427,17 +427,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "cargolifter-backend-github"
-version = "0.1.0"
+name = "cargolifter"
+version = "0.4.0"
 dependencies = [
- "async-trait",
- "base64",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "reqwest",
+ "argh",
+ "cargolifter-backend-github 0.1.0",
+ "cargolifter-core 0.1.0",
+ "cargolifter-storage-filesystem 0.1.0",
+ "cargolifter-storage-s3 0.1.0",
+ "cargolifter-web 0.1.0",
+ "futures",
  "serde",
  "serde_json",
  "tokio",
- "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -448,7 +451,21 @@ checksum = "ef3e2aeef4358276d9f4c7a278f81329415d6a1a69d6c50555ea0eae08809ef3"
 dependencies = [
  "async-trait",
  "base64",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargolifter-core 0.1.0",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "cargolifter-backend-github"
+version = "0.1.1"
+dependencies = [
+ "async-trait",
+ "base64",
+ "cargolifter-core 0.1.0",
  "reqwest",
  "serde",
  "serde_json",
@@ -462,43 +479,13 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "base64",
- "cargolifter-core 0.1.0",
+ "cargolifter-core 0.1.1",
  "reqwest",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
  "urlencoding 2.1.0",
-]
-
-[[package]]
-name = "cargolifter-cli"
-version = "0.1.0"
-dependencies = [
- "argh",
- "cargolifter-backend-github 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-storage-filesystem 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-storage-s3 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-web 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "futures",
- "serde",
- "serde_json",
- "tokio",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "cargolifter-core"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "hex",
- "reqwest",
- "serde",
- "sha2",
- "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -517,11 +504,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "cargolifter-storage-filesystem"
-version = "0.1.0"
+name = "cargolifter-core"
+version = "0.1.1"
 dependencies = [
  "async-trait",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hex",
+ "reqwest",
+ "serde",
+ "sha2",
+ "tokio",
  "tracing",
 ]
 
@@ -532,20 +523,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a9a08f4773751c4b28fc408372c3c6b14810848e0091e8d147b0ecc80d5d269"
 dependencies = [
  "async-trait",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargolifter-core 0.1.0",
  "tracing",
 ]
 
 [[package]]
-name = "cargolifter-storage-s3"
-version = "0.1.0"
+name = "cargolifter-storage-filesystem"
+version = "0.1.1"
 dependencies = [
  "async-trait",
- "aws-config",
- "aws-sdk-s3",
- "aws-types",
- "bytes",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargolifter-core 0.1.0",
  "tracing",
 ]
 
@@ -560,21 +547,20 @@ dependencies = [
  "aws-sdk-s3",
  "aws-types",
  "bytes",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargolifter-core 0.1.0",
  "tracing",
 ]
 
 [[package]]
-name = "cargolifter-web"
-version = "0.1.0"
+name = "cargolifter-storage-s3"
+version = "0.1.1"
 dependencies = [
  "async-trait",
- "axum",
+ "aws-config",
+ "aws-sdk-s3",
+ "aws-types",
  "bytes",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "hyper",
- "serde_json",
- "tokio",
+ "cargolifter-core 0.1.0",
  "tracing",
 ]
 
@@ -587,7 +573,21 @@ dependencies = [
  "async-trait",
  "axum",
  "bytes",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargolifter-core 0.1.0",
+ "hyper",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "cargolifter-web"
+version = "0.1.1"
+dependencies = [
+ "async-trait",
+ "axum",
+ "bytes",
+ "cargolifter-core 0.1.0",
  "hyper",
  "serde_json",
  "tokio",
