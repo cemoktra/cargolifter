@@ -1,18 +1,26 @@
 [package]
 name = "cargolifter"
-version = "0.1.0"
+version = "0.4.0"
 edition = "2021"
+
+
+description = "CargoLifter"
+readme = "README.md"
+homepage = "https://github.com/cemoktra/cargolifter"
+repository = "https://github.com/cemoktra/cargolifter"
+keywords = ["registy", "cargo", "cli"]
+license = "GPL-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 argh = "0.1"
-cargolifter-core = { path = "../core" }
-cargolifter-backend-gitlab = { path = "../backend-gitlab" }
-cargolifter-backend-github = { path = "../backend-github" }
-cargolifter-storage-filesystem = { path = "../storage-filesystem" }
-cargolifter-storage-s3 = { path = "../storage-s3" }
-cargolifter-web = { path = "../web" }
+cargolifter-core = "0.1"
+# cargolifter-backend-gitlab = { path = "../backend-gitlab" }
+cargolifter-backend-github = "0.1"
+cargolifter-storage-filesystem = "0.1"
+cargolifter-storage-s3 = "0.1"
+cargolifter-web = "0.1"
 futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

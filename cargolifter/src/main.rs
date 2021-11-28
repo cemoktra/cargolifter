@@ -1,6 +1,6 @@
 use argh::FromArgs;
 use cargolifter_backend_github::Github;
-use cargolifter_backend_gitlab::Gitlab;
+// use cargolifter_backend_gitlab::Gitlab;
 use cargolifter_core::{BackendService, StorageService};
 use cargolifter_storage_filesystem::FileSystemStorage;
 use cargolifter_storage_s3::S3Storage;
@@ -33,9 +33,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             backend.run()
         }
         cargolifter_core::config::BackendType::Gitlab(config) => {
-            let github = Gitlab::from(config);
-            let backend = BackendService::new(github);
-            backend.run()
+            todo!()
+            // let github = Gitlab::from(config);
+            // let backend = BackendService::new(github);
+            // backend.run()
         }
     };
 
