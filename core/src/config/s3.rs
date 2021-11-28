@@ -1,6 +1,5 @@
 use serde::Deserialize;
 
-
 #[derive(Clone, Deserialize, Debug)]
 pub struct S3Config {
     pub bucket: String,

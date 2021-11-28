@@ -6,7 +6,7 @@ pub async fn update_file(
 ) -> Result<crate::models::update_file::Response, reqwest::Error> {
     let url = format!(
         "https://gitlab.com/api/v4/projects/{}/files/{}",
-        project_id, 
+        project_id,
         urlencoding::encode(file)
     );
     let client = reqwest::Client::new();

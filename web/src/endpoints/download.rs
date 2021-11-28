@@ -15,7 +15,10 @@ pub async fn download(
         result_sender: tx,
     };
 
-    match storage.send(cargolifter_core::StorageCommand::Get(request)).await {
+    match storage
+        .send(cargolifter_core::StorageCommand::Get(request))
+        .await
+    {
         Ok(_) => match rx.await {
             Ok(result) => match result {
                 Some(data) => Ok(data),

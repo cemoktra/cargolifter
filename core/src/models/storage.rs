@@ -11,7 +11,6 @@ impl std::fmt::Display for StorageError {
     }
 }
 
-
 impl std::convert::From<std::io::Error> for StorageError {
     fn from(_: std::io::Error) -> Self {
         StorageError::DetailMeLater

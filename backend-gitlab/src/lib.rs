@@ -8,7 +8,7 @@ use cargolifter_core::Backend;
 pub struct Gitlab {
     cargolifter_token: Option<String>,
     project_id: usize,
-    host: Option<String>
+    host: Option<String>,
 }
 
 impl Gitlab {
@@ -16,7 +16,7 @@ impl Gitlab {
         Self {
             cargolifter_token: config.cargolifter_token,
             project_id: config.project_id,
-            host: config.host.clone()
+            host: config.host.clone(),
         }
     }
 }
@@ -62,8 +62,6 @@ impl Backend for Gitlab {
 
         //         // TODO: check if version already published
         //         versions.push(json);
-
-
 
         //         let update_request = crate::models::update_file::Request {
         //             branch: branch_name.clone(),

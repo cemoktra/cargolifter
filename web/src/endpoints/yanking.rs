@@ -5,11 +5,7 @@ pub async fn yank(
     headers: axum::http::HeaderMap,
     backend: axum::extract::Extension<tokio::sync::mpsc::Sender<cargolifter_core::BackendCommand>>,
 ) -> Result<(), axum::http::StatusCode> {
-    tracing::info!(
-        "yanking '{}' in version '{}'",
-        crate_name,
-        crate_version
-    );
+    tracing::info!("yanking '{}' in version '{}'", crate_name, crate_version);
     let token = match headers.get("authorization") {
         Some(token) => token.to_str().unwrap(),
         None => {
@@ -20,7 +16,7 @@ pub async fn yank(
     let request = YankRequest {
         name: crate_name.clone(),
         vers: crate_version.clone(),
-        yank: true
+        yank: true,
     };
 
     yank_at_backend(backend.0, request, token).await?;
@@ -32,11 +28,7 @@ pub async fn unyank(
     headers: axum::http::HeaderMap,
     backend: axum::extract::Extension<tokio::sync::mpsc::Sender<cargolifter_core::BackendCommand>>,
 ) -> Result<(), axum::http::StatusCode> {
-    tracing::info!(
-        "unyanking '{}' in version '{}'",
-        crate_name,
-        crate_version
-    );
+    tracing::info!("unyanking '{}' in version '{}'", crate_name, crate_version);
     let token = match headers.get("authorization") {
         Some(token) => token.to_str().unwrap(),
         None => {
@@ -47,7 +39,7 @@ pub async fn unyank(
     let request = YankRequest {
         name: crate_name.clone(),
         vers: crate_version.clone(),
-        yank: false
+        yank: false,
     };
 
     yank_at_backend(backend.0, request, token).await?;

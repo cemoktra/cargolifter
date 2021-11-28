@@ -13,9 +13,8 @@ pub enum BackendCommand {
         String,
         models::YankRequest,
         tokio::sync::oneshot::Sender<bool>,
-    )
+    ),
 }
-
 
 pub enum StorageCommand {
     Get(models::StorageGetRequest),
@@ -58,11 +57,7 @@ pub fn get_crate_path(name: &str) -> String {
         2 => "2".into(),
         3 => format!("3/{}", name[0..1].to_string()),
         _ => {
-            format!(
-                "{}/{}",
-                name[0..2].to_string(),
-                name[2..4].to_string()
-            )
+            format!("{}/{}", name[0..2].to_string(), name[2..4].to_string())
         }
     }
 }
@@ -81,7 +76,7 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
     }
 
     pub fn run(
-        self
+        self,
     ) -> (
         tokio::task::JoinHandle<()>,
         tokio::sync::mpsc::Sender<BackendCommand>,
@@ -105,7 +100,7 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
                                     }
                                 }
                             }
-                        },
+                        }
                         BackendCommand::Yank(token, req, sender) => {
                             match self.backend.yank_crate(&token, &req).await {
                                 Ok(_) => {
@@ -133,8 +128,6 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
     }
 }
 
-
-
 pub struct StorageService<T: Storage + Sync + Send> {
     storage: T,
 }
@@ -145,7 +138,7 @@ impl<T: Storage + Sync + Send + 'static> StorageService<T> {
     }
 
     pub fn run(
-        mut self
+        mut self,
     ) -> (
         tokio::task::JoinHandle<()>,
         tokio::sync::mpsc::Sender<StorageCommand>,
@@ -169,9 +162,13 @@ impl<T: Storage + Sync + Send + 'static> StorageService<T> {
                                     }
                                 }
                             }
-                        },
+                        }
                         StorageCommand::Put(req) => {
-                            match self.storage.put(&req.crate_name, &req.crate_version, &req.data).await {
+                            match self
+                                .storage
+                                .put(&req.crate_name, &req.crate_version, &req.data)
+                                .await
+                            {
                                 Ok(_) => {
                                     if let Err(_) = req.result_sender.send(true) {
                                         tracing::error!("Failed to send storage result!");

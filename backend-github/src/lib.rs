@@ -8,7 +8,7 @@ use cargolifter_core::Backend;
 pub struct Github {
     cargoliter_token: Option<String>,
     project_id: String,
-    host: Option<String>
+    host: Option<String>,
 }
 
 impl Github {
@@ -16,7 +16,7 @@ impl Github {
         Self {
             cargoliter_token: config.cargolifter_token,
             project_id: [config.owner, config.repo].join("/").into(),
-            host: config.host.clone()
+            host: config.host.clone(),
         }
     }
 }
@@ -43,7 +43,12 @@ impl Backend for Github {
 
         let credentials = token.split(":").collect::<Vec<_>>();
         let owned_token = token.to_owned();
-        let merge_credentials = self.cargoliter_token.as_ref().unwrap_or(&owned_token).split(":").collect::<Vec<_>>();
+        let merge_credentials = self
+            .cargoliter_token
+            .as_ref()
+            .unwrap_or(&owned_token)
+            .split(":")
+            .collect::<Vec<_>>();
         let default_host = String::from("https://api.github.com");
         let host = self.host.as_ref().unwrap_or(&default_host);
 
@@ -92,9 +97,14 @@ impl Backend for Github {
                     ..Default::default()
                 };
 
-                let main_branch =
-                    api::get_branch(host,credentials[0], credentials[1], &self.project_id, "main")
-                        .await?;
+                let main_branch = api::get_branch(
+                    host,
+                    credentials[0],
+                    credentials[1],
+                    &self.project_id,
+                    "main",
+                )
+                .await?;
                 api::create_branch(
                     host,
                     credentials[0],
@@ -134,10 +144,16 @@ impl Backend for Github {
             }
             Err(_) => {
                 tracing::info!("'{}' not found! creating!", crate_path);
-                let main_branch =
-                    api::get_branch(host,credentials[0], credentials[1], &self.project_id, "main")
-                        .await?;
-                api::create_branch(host,
+                let main_branch = api::get_branch(
+                    host,
+                    credentials[0],
+                    credentials[1],
+                    &self.project_id,
+                    "main",
+                )
+                .await?;
+                api::create_branch(
+                    host,
                     credentials[0],
                     credentials[1],
                     &self.project_id,
@@ -278,7 +294,12 @@ impl Backend for Github {
 
         let credentials = token.split(":").collect::<Vec<_>>();
         let owned_token = token.to_owned();
-        let merge_credentials = self.cargoliter_token.as_ref().unwrap_or(&owned_token).split(":").collect::<Vec<_>>();
+        let merge_credentials = self
+            .cargoliter_token
+            .as_ref()
+            .unwrap_or(&owned_token)
+            .split(":")
+            .collect::<Vec<_>>();
         let default_host = String::from("https://api.github.com");
         let host = self.host.as_ref().unwrap_or(&default_host);
 
@@ -338,9 +359,14 @@ impl Backend for Github {
                     ..Default::default()
                 };
 
-                let main_branch =
-                    api::get_branch(host,credentials[0], credentials[1], &self.project_id, "main")
-                        .await?;
+                let main_branch = api::get_branch(
+                    host,
+                    credentials[0],
+                    credentials[1],
+                    &self.project_id,
+                    "main",
+                )
+                .await?;
                 api::create_branch(
                     host,
                     credentials[0],

@@ -7,10 +7,7 @@ pub async fn get_branch(
     project_id: &str,
     branch: &str,
 ) -> Result<crate::models::get_branch::Response, reqwest::Error> {
-    let url = format!(
-        "{}/repos/{}/branches/{}",
-        url, project_id, branch
-    );
+    let url = format!("{}/repos/{}/branches/{}", url, project_id, branch);
     let client = reqwest::Client::new();
     client
         .get(url)

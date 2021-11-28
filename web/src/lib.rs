@@ -5,7 +5,7 @@ use hyper::body::Buf;
 pub struct WebService {
     backend: tokio::sync::mpsc::Sender<cargolifter_core::BackendCommand>,
     storage: tokio::sync::mpsc::Sender<cargolifter_core::StorageCommand>,
-    config: cargolifter_core::config::WebServiceConfig
+    config: cargolifter_core::config::WebServiceConfig,
 }
 
 pub struct RequestExtractor(cargolifter_core::models::PublishRequest);
@@ -36,12 +36,12 @@ impl WebService {
     pub fn new(
         backend: tokio::sync::mpsc::Sender<cargolifter_core::BackendCommand>,
         storage: tokio::sync::mpsc::Sender<cargolifter_core::StorageCommand>,
-        config: cargolifter_core::config::WebServiceConfig
+        config: cargolifter_core::config::WebServiceConfig,
     ) -> Self {
-        Self { 
+        Self {
             backend,
             storage,
-            config
+            config,
         }
     }
 
@@ -55,8 +55,14 @@ impl WebService {
                 axum::handler::get(endpoints::download),
             )
             .route("/api/v1/crates/new", axum::handler::put(endpoints::publish))
-            .route("/api/v1/crates/:name/:version/yank", axum::handler::delete(endpoints::yank))
-            .route("/api/v1/crates/:name/:version/unyank", axum::handler::put(endpoints::unyank))
+            .route(
+                "/api/v1/crates/:name/:version/yank",
+                axum::handler::delete(endpoints::yank),
+            )
+            .route(
+                "/api/v1/crates/:name/:version/unyank",
+                axum::handler::put(endpoints::unyank),
+            )
             .layer(axum::AddExtensionLayer::new(self.backend.clone()))
             .layer(axum::AddExtensionLayer::new(self.storage.clone()));
 

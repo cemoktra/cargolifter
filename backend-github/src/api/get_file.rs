@@ -6,10 +6,7 @@ pub async fn get_file(
     file: &str,
     branch: &str,
 ) -> Result<crate::models::get_file::Response, reqwest::Error> {
-    let url = format!(
-        "{}/repos/{}/contents/{}",
-        url, project_id, file
-    );
+    let url = format!("{}/repos/{}/contents/{}", url, project_id, file);
     let client = reqwest::Client::new();
     client
         .get(url)

@@ -5,10 +5,7 @@ pub async fn close_pull_request(
     project_id: &str,
     pull_id: i64,
 ) -> Result<crate::models::close_pull_request::Response, reqwest::Error> {
-    let url = format!(
-        "{}/repos/{}/pulls/{}",
-        url, project_id, pull_id
-    );
+    let url = format!("{}/repos/{}/pulls/{}", url, project_id, pull_id);
     let client = reqwest::Client::new();
     let request = crate::models::close_pull_request::Request {
         state: "closed".into(),

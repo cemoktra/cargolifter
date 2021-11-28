@@ -3,8 +3,7 @@ pub async fn get_file(
     token: &str,
     project_id: usize,
     file: &str,
-    branch: &str
-//) -> Result<crate::models::get_file::Response, reqwest::Error> {
+    branch: &str, //) -> Result<crate::models::get_file::Response, reqwest::Error> {
 ) -> Result<String, reqwest::Error> {
     let url = format!(
         "{}/api/v4/projects/{}/files/{}",
@@ -17,6 +16,7 @@ pub async fn get_file(
     client
         .get(url)
         .header("PRIVATE-TOKEN", token)
+        .header("user-agent", "cargolifter")
         .query(&[("ref", branch)])
         .send()
         .await?

@@ -4,5 +4,5 @@ use serde::Deserialize;
 pub struct CargoLifterConfig {
     pub backend: crate::config::BackendConfig,
     pub web: crate::config::WebServiceConfig,
-    pub storage: crate::config::StorageConfig
+    pub storage: crate::config::StorageConfig,
 }
