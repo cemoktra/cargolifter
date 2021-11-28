@@ -427,23 +427,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cargolifter"
-version = "0.4.0"
-dependencies = [
- "argh",
- "cargolifter-backend-github 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-storage-filesystem 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-storage-s3 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-web 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "futures",
- "serde",
- "serde_json",
- "tokio",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "cargolifter-backend-github"
 version = "0.1.0"
 dependencies = [
@@ -486,6 +469,23 @@ dependencies = [
  "tokio",
  "tracing",
  "urlencoding 2.1.0",
+]
+
+[[package]]
+name = "cargolifter-cli"
+version = "0.1.0"
+dependencies = [
+ "argh",
+ "cargolifter-backend-github 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargolifter-storage-filesystem 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargolifter-storage-s3 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargolifter-web 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "futures",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing-subscriber",
 ]
 
 [[package]]
