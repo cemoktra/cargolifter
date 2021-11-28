@@ -5,7 +5,7 @@ edition = "2021"
 
 
 description = "CargoLifter"
-readme = "README.md"
+readme = "cargolifter/README.md"
 homepage = "https://github.com/cemoktra/cargolifter"
 repository = "https://github.com/cemoktra/cargolifter"
 keywords = ["registy", "cargo", "cli"]
