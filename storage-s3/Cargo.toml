@@ -3,6 +3,13 @@ name = "cargolifter-storage-s3"
 version = "0.1.0"
 edition = "2021"
 
+
+description = "CargoLifter S3 storage"
+homepage = "https://github.com/cemoktra/cargolifter"
+repository = "https://github.com/cemoktra/cargolifter"
+keywords = ["registy", "cargo", "storage", "s3"]
+license = "GPL-2.0"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -11,5 +18,5 @@ aws-config = "0.0.26-alpha"
 aws-sdk-s3 = "0.0.26-alpha"
 aws-types = "0.0.26-alpha"
 bytes = "1.1"
-cargolifter-core = { path = "../core" }
+cargolifter-core = "0.1"
 tracing = "0.1"
