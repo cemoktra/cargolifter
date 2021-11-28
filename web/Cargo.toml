@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1"
 bytes = "1.1"
-cargolifter-core = { path = "../core" }
+cargolifter-core = "0.1"
 axum = { version = "0.2", features = ["headers"] }
 hyper = "0.14"
 # serde = { version = "1.0.70", features = ["derive"] }
