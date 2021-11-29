@@ -11,7 +11,7 @@ CargoLifter uses access tokens for interacting with the backend. So each action 
 
 ## Cargo Login ##
 ### Github ###
-Use a combination of u sername and personal access token like this: `<username>:<token>`
+Use a combination of username and personal access token like this: `<username>:<token>`
 
 ### Gitlab ###
 Use your gitlab access token as cargo login token.
@@ -31,10 +31,8 @@ Configuration is done via a JSON config file.
 FileSystem storage configuration:
 ```json
 "storage": {
-    "type": {
-        "FileSystem": {
-            "path": "<path>"
-        }
+    "FileSystem": {
+        "path": "<path>"
     }
 }
 ```
@@ -42,14 +40,12 @@ FileSystem storage configuration:
 S3 storage configuration (you may omit the `credentials` for S3 access as it will default to the environment variables):
 ```json
 "storage": {
-    "type": {
-        "S3": {
-            "bucket": "<bucket name>",
-            "credentials": {
-                "access_key": "<access key>",
-                "secret_key": "<secret key>",
-                "secret_token": "<optional secret token>",
-            }
+    "S3": {
+        "bucket": "<bucket name>",
+        "credentials": {
+            "access_key": "<access key>",
+            "secret_key": "<secret key>",
+            "secret_token": "<optional secret token>",
         }
     }
 }
@@ -63,14 +59,12 @@ Github configuration:
 
 ```json
 "backend": {
-    "type": {
-        "Github": {
-            "owner": "<username>",
-            "repo": "<repository>",
-            "host": "<for future when hosting custom instance>",
-            "cargolifter_token": "<a token to use to merge pull requests>",
-            "default_branch": "<default to main>"
-        }
+    "Github": {
+        "owner": "<username>",
+        "repo": "<repository>",
+        "host": "<for future when hosting custom instance>",
+        "cargolifter_token": "<a token to use to merge pull requests>",
+        "default_branch": "<default to main>"
     }
 }
 ```
@@ -78,13 +72,11 @@ Github configuration:
 Gitlab configuration:
 ```json
 "backend": {
-    "type": {
-        "Gitlab": {
-            "project_id": "<project id>",
-            "host": "<hosting custom instance>",
-            "cargolifter_token": "<a token to use to merge pull requests>",
-            "default_branch": "<default to main>"
-        }
+    "Gitlab": {
+        "project_id": "<project id>",
+        "host": "<hosting custom instance>",
+        "cargolifter_token": "<a token to use to merge pull requests>",
+        "default_branch": "<default to main>"
     }
 }
 ```
@@ -102,21 +94,17 @@ The registry git repository must contain a prefilled `config.json` containing on
 ```json
 {
     "backend": {
-        "type": {
-            "Github": {
-                "owner": "cemoktra",
-                "repo": "my-private-crates",
-            }
+        "Github": {
+            "owner": "cemoktra",
+            "repo": "my-private-crates",
         }
     },
     "web": {
         "port": 8080
     },
     "storage": {
-        "type": {
-            "FileSystem": {
-                "path": "./test/storage"
-            }
+        "FileSystem": {
+            "path": "./test/storage"
         }
     }
 }
