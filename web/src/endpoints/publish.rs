@@ -19,17 +19,58 @@ pub async fn publish(
         }
     };
 
-    // TODO: store to storage
-    publish_to_storage(
-        storage.0,
-        &request.meta.name,
-        &request.meta.vers,
-        request.data.clone(),
-    )
-    .await?;
-    publish_to_backend(backend.0, request, token).await?;
 
-    Ok(())
+    if is_version_published(backend.0.clone(), &request.meta.name, &request.meta.vers, token).await? {
+        // TODO: return 200 with json like
+        // {
+        //     // Array of errors to display to the user.
+        //     "errors": [
+        //         {
+        //             // The error message as a string.
+        //             "detail": "error message text"
+        //         }
+        //     ]
+        // }
+
+        Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+    } else {
+        // TODO: store to storage
+        publish_to_storage(
+            storage.0,
+            &request.meta.name,
+            &request.meta.vers,
+            request.data.clone(),
+        )
+        .await?;
+        publish_to_backend(backend.0, request, token).await?;
+
+        Ok(())
+    }
+}
+
+async fn is_version_published(
+    storage: tokio::sync::mpsc::Sender<cargolifter_core::BackendCommand>,
+    crate_name: &str,
+    crate_version: &str,
+    token: &str,
+) -> Result<bool, axum::http::StatusCode> {
+    let (tx, rx) = tokio::sync::oneshot::channel::<bool>();
+
+    match storage.send(BackendCommand::IsVersionPublished(token.into(), crate_name.into(), crate_version.into(), tx)).await {
+        Ok(_) => match rx.await {
+            Ok(result) => {
+                Ok(result)
+            }
+            Err(e) => {
+                tracing::error!("Failed to receive storage response: {}", e);
+                Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+            }
+        },
+        Err(e) => {
+            tracing::error!("Failed to send storage command: {}", e);
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
 }
 
 async fn publish_to_storage(

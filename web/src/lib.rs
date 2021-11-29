@@ -10,7 +10,7 @@ pub struct WebService {
 
 pub struct RequestExtractor(cargolifter_core::models::PublishRequest);
 
-#[async_trait::async_trait]
+#[axum::async_trait]
 impl axum::extract::FromRequest for RequestExtractor {
     type Rejection = axum::http::StatusCode;
 

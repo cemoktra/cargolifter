@@ -6,4 +6,5 @@ pub struct GithubConfig {
     pub owner: String,
     pub repo: String,
     pub cargolifter_token: Option<String>,
+    pub default_branch: Option<String>,
 }

@@ -1,5 +1,6 @@
 pub mod config;
 pub mod models;
+pub mod utils;
 
 use async_trait::async_trait;
 
@@ -12,6 +13,12 @@ pub enum BackendCommand {
     Yank(
         String,
         models::YankRequest,
+        tokio::sync::oneshot::Sender<bool>,
+    ),
+    IsVersionPublished(
+        String,
+        String,
+        String,
         tokio::sync::oneshot::Sender<bool>,
     ),
 }
@@ -34,6 +41,12 @@ pub trait Backend {
         token: &str,
         request: &models::YankRequest,
     ) -> Result<(), reqwest::Error>;
+    async fn is_version_published(
+        &self,
+        token: &str,
+        crate_name: &str,
+        crate_version: &str,
+    ) -> Result<bool, reqwest::Error>;
 }
 
 #[async_trait]
@@ -47,7 +60,7 @@ pub trait Storage {
         &mut self,
         crate_name: &str,
         crate_version: &str,
-        data: &Vec<u8>,
+        data: &[u8],
     ) -> Result<(), models::StorageError>;
 }
 
@@ -89,13 +102,13 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
                         BackendCommand::Publish(token, req, sender) => {
                             match self.backend.publish_crate(&token, &req).await {
                                 Ok(_) => {
-                                    if let Err(_) = sender.send(true) {
+                                    if sender.send(true).is_err() {
                                         tracing::error!("Failed to send publish result!");
                                     }
                                 }
                                 Err(e) => {
                                     tracing::error!("Publish failed: {}", e);
-                                    if let Err(_) = sender.send(false) {
+                                    if sender.send(false).is_err() {
                                         tracing::error!("Failed to send publish result!");
                                     }
                                 }
@@ -104,14 +117,29 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
                         BackendCommand::Yank(token, req, sender) => {
                             match self.backend.yank_crate(&token, &req).await {
                                 Ok(_) => {
-                                    if let Err(_) = sender.send(true) {
+                                    if sender.send(true).is_err() {
                                         tracing::error!("Failed to send yank result!");
                                     }
                                 }
                                 Err(e) => {
                                     tracing::error!("Publish failed: {}", e);
-                                    if let Err(_) = sender.send(false) {
+                                    if sender.send(false).is_err() {
                                         tracing::error!("Failed to send yank result!");
+                                    }
+                                }
+                            }
+                        }
+                        BackendCommand::IsVersionPublished(token, name, version, sender) => {
+                            match self.backend.is_version_published(&token, &name, &version).await {
+                                Ok(_) => {
+                                    if sender.send(true).is_err() {
+                                        tracing::error!("Failed to send isPublished result!");
+                                    }
+                                }
+                                Err(e) => {
+                                    tracing::error!("Publish failed: {}", e);
+                                    if sender.send(false).is_err() {
+                                        tracing::error!("Failed to send isPublished result!");
                                     }
                                 }
                             }
@@ -151,13 +179,13 @@ impl<T: Storage + Sync + Send + 'static> StorageService<T> {
                         StorageCommand::Get(req) => {
                             match self.storage.get(&req.crate_name, &req.crate_version).await {
                                 Ok(data) => {
-                                    if let Err(_) = req.result_sender.send(Some(data)) {
+                                    if req.result_sender.send(Some(data)).is_err() {
                                         tracing::error!("Failed to send storage result!");
                                     }
                                 }
                                 Err(e) => {
                                     tracing::error!("Storage get failed: {}", e);
-                                    if let Err(_) = req.result_sender.send(None) {
+                                    if req.result_sender.send(None).is_err() {
                                         tracing::error!("Failed to send storage result!");
                                     }
                                 }
@@ -170,13 +198,13 @@ impl<T: Storage + Sync + Send + 'static> StorageService<T> {
                                 .await
                             {
                                 Ok(_) => {
-                                    if let Err(_) = req.result_sender.send(true) {
+                                    if req.result_sender.send(true).is_err() {
                                         tracing::error!("Failed to send storage result!");
                                     }
                                 }
                                 Err(e) => {
                                     tracing::error!("Storage put failed: {}", e);
-                                    if let Err(_) = req.result_sender.send(false) {
+                                    if req.result_sender.send(false).is_err() {
                                         tracing::error!("Failed to send storage result!");
                                     }
                                 }

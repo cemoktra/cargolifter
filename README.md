@@ -5,7 +5,7 @@
 This project offers an implementation of an alternate registry. Instead of having it's own auth mechanism it uses existing source control providers logins. Those are:
 
 - Github
-- Gitlab (planned)
+- Gitlab
 
 CargoLifter uses access tokens for interacting with the backend. So each action will be impersonated. This of course requires write access and this is the way to limit.
 
@@ -59,7 +59,7 @@ Files that are mirrored will automatically put in a subfolder called `mirror`.
 
 
 ### Backend ###
-Currently the default branch must be named "main" but this will be configurable in the future.
+Github configuration:
 
 ```json
 "backend": {
@@ -68,13 +68,28 @@ Currently the default branch must be named "main" but this will be configurable 
             "owner": "<username>",
             "repo": "<repository>",
             "host": "<for future when hosting custom instance>",
-            "cargolifter_token": "<a token to use to merge pull requests>"
+            "cargolifter_token": "<a token to use to merge pull requests>",
+            "default_branch": "<default to main>"
         }
     }
 }
 ```
 
-The registry git repository must contain a prefilled `config.json` containing:
+Gitlab configuration:
+```json
+"backend": {
+    "type": {
+        "Gitlab": {
+            "project_id": "<project id>",
+            "host": "<hosting custom instance>",
+            "cargolifter_token": "<a token to use to merge pull requests>",
+            "default_branch": "<default to main>"
+        }
+    }
+}
+```
+
+The registry git repository must contain a prefilled `config.json` containing on both cases:
 ```json
 {
     "dl": "http://<hostname>:<port>/api/v1/crates",

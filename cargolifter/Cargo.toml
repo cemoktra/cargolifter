@@ -15,12 +15,12 @@ license = "GPL-2.0"
 
 [dependencies]
 argh = "0.1"
-cargolifter-core = "0.1"
-# cargolifter-backend-gitlab = { path = "../backend-gitlab" }
-cargolifter-backend-github = "0.1"
-cargolifter-storage-filesystem = "0.1"
-cargolifter-storage-s3 = "0.1"
-cargolifter-web = "0.1"
+cargolifter-core = { path = "../core" }
+cargolifter-backend-gitlab = { path = "../backend-gitlab" }
+cargolifter-backend-github = { path = "../backend-github" }
+cargolifter-storage-filesystem = { path = "../storage-filesystem" }
+cargolifter-storage-s3 = { path = "../storage-s3" }
+cargolifter-web = { path = "../web" }
 futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
