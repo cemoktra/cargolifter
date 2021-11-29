@@ -1,5 +1,5 @@
 [![Build Status](https://github.com/cemoktra/cargolifter/workflows/CI/badge.svg)](https://github.com/cemoktra/cargolifter/actions)
-
+[![crates.io](https://img.shields.io/crates/v/cargolifter.svg)](https://crates.io/crates/cargolifter)
 
 # CargoLifter #
 This project offers an implementation of an alternate registry. Instead of having it's own auth mechanism it uses existing source control providers logins. Those are:
