@@ -1,13 +1,14 @@
 // DELETE /projects/:id/repository/branches/:branch
 
 pub async fn delete_branch(
+    host: &str,
     token: &str,
     project_id: usize,
     branch: &str,
 ) -> Result<(), reqwest::Error> {
     let url = format!(
-        "https://gitlab.com/api/v4/projects/{}/repository/branches/{}",
-        project_id, branch
+        "{}/api/v4/projects/{}/repository/branches/{}",
+        host, project_id, branch
     );
     let client = reqwest::Client::new();
     client

@@ -428,14 +428,15 @@ dependencies = [
 
 [[package]]
 name = "cargolifter"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "argh",
- "cargolifter-backend-github 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-storage-filesystem 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-storage-s3 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargolifter-web 0.1.0",
+ "cargolifter-backend-github",
+ "cargolifter-backend-gitlab",
+ "cargolifter-core",
+ "cargolifter-storage-filesystem",
+ "cargolifter-storage-s3",
+ "cargolifter-web",
  "futures",
  "serde",
  "serde_json",
@@ -445,27 +446,11 @@ dependencies = [
 
 [[package]]
 name = "cargolifter-backend-github"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "base64",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "reqwest",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "cargolifter-backend-github"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef3e2aeef4358276d9f4c7a278f81329415d6a1a69d6c50555ea0eae08809ef3"
-dependencies = [
- "async-trait",
- "base64",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargolifter-core",
  "reqwest",
  "serde",
  "serde_json",
@@ -479,7 +464,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "base64",
- "cargolifter-core 0.1.0",
+ "cargolifter-core",
  "reqwest",
  "serde",
  "serde_json",
@@ -490,104 +475,48 @@ dependencies = [
 
 [[package]]
 name = "cargolifter-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
+ "base64",
  "hex",
  "reqwest",
  "serde",
- "sha2",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "cargolifter-core"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e7a72c1bb2e7945144b6e67cd1d2a9471e36ce449eaf6a037c2c2efe45f1c92"
-dependencies = [
- "async-trait",
- "hex",
- "reqwest",
- "serde",
- "sha2",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "cargolifter-storage-filesystem"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "tracing",
-]
-
-[[package]]
-name = "cargolifter-storage-filesystem"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a9a08f4773751c4b28fc408372c3c6b14810848e0091e8d147b0ecc80d5d269"
-dependencies = [
- "async-trait",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "tracing",
-]
-
-[[package]]
-name = "cargolifter-storage-s3"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "aws-config",
- "aws-sdk-s3",
- "aws-types",
- "bytes",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "tracing",
-]
-
-[[package]]
-name = "cargolifter-storage-s3"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67d69ee835fc1c70e85eecc6a368eb6582349297f7d98ba4ba8df740f376b51e"
-dependencies = [
- "async-trait",
- "aws-config",
- "aws-sdk-s3",
- "aws-types",
- "bytes",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "tracing",
-]
-
-[[package]]
-name = "cargolifter-web"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a05fa2fa5e59d405102facba23b844d122d741e02a4ee6e3af52b44b7bb39bd"
-dependencies = [
- "async-trait",
- "axum",
- "bytes",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "hyper",
  "serde_json",
+ "sha2",
  "tokio",
  "tracing",
 ]
 
 [[package]]
-name = "cargolifter-web"
-version = "0.1.1"
+name = "cargolifter-storage-filesystem"
+version = "0.2.0"
 dependencies = [
  "async-trait",
+ "cargolifter-core",
+ "tracing",
+]
+
+[[package]]
+name = "cargolifter-storage-s3"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "aws-config",
+ "aws-sdk-s3",
+ "aws-types",
+ "bytes",
+ "cargolifter-core",
+ "tracing",
+]
+
+[[package]]
+name = "cargolifter-web"
+version = "0.1.2"
+dependencies = [
  "axum",
  "bytes",
- "cargolifter-core 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargolifter-core",
  "hyper",
  "serde_json",
  "tokio",
@@ -1467,9 +1396,9 @@ dependencies = [
 
 [[package]]
 name = "ryu"
-version = "1.0.5"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
+checksum = "3c9613b5a66ab9ba26415184cfc41156594925a9cf3a2057e57f31ff145f6568"
 
 [[package]]
 name = "schannel"
@@ -1548,9 +1477,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.71"
+version = "1.0.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "063bf466a64011ac24040a49009724ee60a57da1b437617ceb32e53ad61bfb19"
+checksum = "d0ffa0837f2dfa6fb90868c2b5468cad482e175f7dad97e7421951e663f2b527"
 dependencies = [
  "itoa",
  "ryu",
@@ -1643,9 +1572,9 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "syn"
-version = "1.0.81"
+version = "1.0.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2afee18b8beb5a596ecb4a2dce128c719b4ba399d34126b9e4396e3f9860966"
+checksum = "8daf5dd0bb60cbd4137b1b587d2fc0ae729bc07cf01cd70b36a1ed5ade3b9d59"
 dependencies = [
  "proc-macro2",
  "quote",

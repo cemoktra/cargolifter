@@ -1,6 +1,6 @@
 [package]
 name = "cargolifter"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 
 
@@ -15,14 +15,15 @@ license = "GPL-2.0"
 
 [dependencies]
 argh = "0.1"
-cargolifter-core = "0.1"
-# cargolifter-backend-gitlab = { path = "../backend-gitlab" }
+cargolifter-core = "0.2"
+cargolifter-backend-gitlab = "0.1"
 cargolifter-backend-github = "0.1"
-cargolifter-storage-filesystem = "0.1"
-cargolifter-storage-s3 = "0.1"
+cargolifter-storage-filesystem = "0.2"
+cargolifter-storage-s3 = "0.2"
 cargolifter-web = "0.1"
 futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.14", features = ["rt", "macros"] }
 tracing-subscriber = "0.3"
+

@@ -1,6 +1,6 @@
 use argh::FromArgs;
 use cargolifter_backend_github::Github;
-// use cargolifter_backend_gitlab::Gitlab;
+use cargolifter_backend_gitlab::Gitlab;
 use cargolifter_core::{BackendService, StorageService};
 use cargolifter_storage_filesystem::FileSystemStorage;
 use cargolifter_storage_s3::S3Storage;
@@ -26,21 +26,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config: cargolifter_core::config::CargoLifterConfig =
         serde_json::from_reader(std::io::BufReader::new(file))?;
 
-    let (backend_handle, backend_sender) = match config.backend.r#type {
+    let (backend_handle, backend_sender) = match config.backend {
         cargolifter_core::config::BackendType::Github(config) => {
             let github = Github::from(config);
             let backend = BackendService::new(github);
             backend.run()
         }
         cargolifter_core::config::BackendType::Gitlab(config) => {
-            todo!()
-            // let github = Gitlab::from(config);
-            // let backend = BackendService::new(github);
-            // backend.run()
+            let gitlab = Gitlab::from(config);
+            let backend = BackendService::new(gitlab);
+            backend.run()
         }
     };
 
-    let (storage_handle, storage_sender) = match config.storage.r#type {
+    let (storage_handle, storage_sender) = match config.storage {
         cargolifter_core::config::StorageType::FileSystem(config) => {
             let filesystem = FileSystemStorage::new(&config.path);
             let storage = StorageService::new(filesystem);

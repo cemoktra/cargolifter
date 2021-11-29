@@ -10,8 +10,8 @@ pub async fn download(
 
     let (tx, rx) = tokio::sync::oneshot::channel::<Option<Vec<u8>>>();
     let request = cargolifter_core::models::StorageGetRequest {
-        crate_name: crate_name.into(),
-        crate_version: crate_version.into(),
+        crate_name,
+        crate_version,
         result_sender: tx,
     };
 

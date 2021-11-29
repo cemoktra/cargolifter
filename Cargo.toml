@@ -1,5 +1,5 @@
 [workspace]
-members = [    
+members = [
     "backend-github",
     "backend-gitlab",
     "cargolifter",
@@ -12,3 +12,11 @@ members = [
 exclude = [
     "test"
 ]
+
+[patch.crates-io]
+cargolifter-core = { path = "core" }
+cargolifter-backend-gitlab = { path = "backend-gitlab" }
+cargolifter-backend-github = { path = "backend-github" }
+cargolifter-storage-filesystem = { path = "storage-filesystem" }
+cargolifter-storage-s3 = { path = "storage-s3" }
+cargolifter-web = { path = "web" }
