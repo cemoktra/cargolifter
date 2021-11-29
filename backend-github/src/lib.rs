@@ -132,7 +132,7 @@ impl Backend for Github {
         token: &str,
         request: &PublishRequest,
     ) -> Result<(), reqwest::Error> {
-        let crate_path = request.meta.crate_file_path();
+        let crate_path = cargolifter_core::utils::get_crate_file_path(&request.meta.name);
         let branch_name = format!("{}-{}", request.meta.name, request.meta.vers);
 
         let credentials = token.split(':').collect::<Vec<_>>();
@@ -282,7 +282,7 @@ impl Backend for Github {
         token: &str,
         request: &cargolifter_core::models::YankRequest,
     ) -> Result<(), reqwest::Error> {
-        let crate_path = cargolifter_core::get_crate_file_path(&request.name);
+        let crate_path = cargolifter_core::utils::get_crate_file_path(&request.name);
         let branch_name = format!(
             "{}-{}-{}",
             if request.yank { "yank" } else { "unyank" },
@@ -408,7 +408,7 @@ impl Backend for Github {
         crate_name: &str,
         crate_version: &str,
     ) -> Result<bool, reqwest::Error> {
-        let crate_path = cargolifter_core::get_crate_file_path(crate_name);
+        let crate_path = cargolifter_core::utils::get_crate_file_path(crate_name);
 
         let credentials = token.split(':').collect::<Vec<_>>();
         let host = self.host();

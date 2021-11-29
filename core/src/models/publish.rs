@@ -3,6 +3,7 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::hash::Hash;
 
+/// A dependency
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Dependency {
     pub name: String,
@@ -16,6 +17,7 @@ pub struct Dependency {
     pub package: Option<String>,
 }
 
+// Crate meta data
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct MetaData {
     pub name: String,
@@ -37,18 +39,14 @@ pub struct MetaData {
     pub links: Option<String>,
 }
 
+// Publish request containing meta data and crate data
 #[derive(Debug, Default)]
 pub struct PublishRequest {
     pub meta: MetaData,
     pub data: Vec<u8>,
 }
 
-impl MetaData {
-    pub fn crate_file_path(&self) -> String {
-        crate::get_crate_file_path(&self.name)
-    }
-}
-
+// A published dependency
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct PublishedDependency {
     pub name: String,
@@ -78,6 +76,7 @@ impl std::convert::From<Dependency> for PublishedDependency {
     }
 }
 
+// A published version
 #[derive(Debug, Serialize, Deserialize, Eq)]
 pub struct PublishedVersion {
     pub name: String,
@@ -124,41 +123,3 @@ impl Hash for PublishedVersion {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_crate_file_path_1() {
-        let meta = super::MetaData {
-            name: "A".into(),
-            ..Default::default()
-        };
-        assert_eq!("1/A", meta.crate_file_path());
-    }
-
-    #[test]
-    fn test_crate_file_path_2() {
-        let meta = super::MetaData {
-            name: "AB".into(),
-            ..Default::default()
-        };
-        assert_eq!("2/AB", meta.crate_file_path());
-    }
-
-    #[test]
-    fn test_crate_file_path_3() {
-        let meta = super::MetaData {
-            name: "ABC".into(),
-            ..Default::default()
-        };
-        assert_eq!("3/A/ABC", meta.crate_file_path());
-    }
-
-    #[test]
-    fn test_crate_file_path_more() {
-        let meta = super::MetaData {
-            name: "ABCDE".into(),
-            ..Default::default()
-        };
-        assert_eq!("AB/CD/ABCDE", meta.crate_file_path());
-    }
-}

@@ -1,10 +1,18 @@
+/// Backend configuration
 pub mod backend;
+/// Cargolifter configuration
 pub mod cargolifter;
+/// FileSystem storage configuration
 pub mod filesystem;
+/// Github backend configuration
 pub mod github;
+/// Gitlab backend configuration
 pub mod gitlab;
+/// S3 storage configuration
 pub mod s3;
+/// Storage configuration
 pub mod storage;
+/// Web service configuration
 pub mod web;
 
 pub use backend::*;

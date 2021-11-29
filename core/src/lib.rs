@@ -1,9 +1,14 @@
+
+/// Configuration structs
 pub mod config;
+/// Cargo JSON models
 pub mod models;
+/// Common functions
 pub mod utils;
 
 use async_trait::async_trait;
 
+/// Commands to send to the git backend
 pub enum BackendCommand {
     Publish(
         String,
@@ -23,11 +28,13 @@ pub enum BackendCommand {
     ),
 }
 
+/// Commands to send to the storage
 pub enum StorageCommand {
     Get(models::StorageGetRequest),
     Put(models::StoragePutRequest),
 }
 
+/// Trait for all backends
 #[async_trait]
 pub trait Backend {
     async fn publish_crate(
@@ -49,6 +56,7 @@ pub trait Backend {
     ) -> Result<bool, reqwest::Error>;
 }
 
+/// Trait for all storages
 #[async_trait]
 pub trait Storage {
     async fn get(
@@ -64,21 +72,7 @@ pub trait Storage {
     ) -> Result<(), models::StorageError>;
 }
 
-pub fn get_crate_path(name: &str) -> String {
-    match name.len() {
-        1 => "1".into(),
-        2 => "2".into(),
-        3 => format!("3/{}", name[0..1].to_string()),
-        _ => {
-            format!("{}/{}", name[0..2].to_string(), name[2..4].to_string())
-        }
-    }
-}
-
-pub fn get_crate_file_path(name: &str) -> String {
-    format!("{}/{}", get_crate_path(name), name)
-}
-
+// Runnable backend service
 pub struct BackendService<T: Backend + Sync + Send> {
     backend: T,
 }
@@ -156,6 +150,7 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
     }
 }
 
+// Runnable storage service
 pub struct StorageService<T: Storage + Sync + Send> {
     storage: T,
 }

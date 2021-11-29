@@ -23,7 +23,7 @@ impl cargolifter_core::Storage for FileSystemStorage {
         crate_version: &str,
     ) -> Result<Vec<u8>, cargolifter_core::models::StorageError> {
         let root_path = Path::new(&self.root_folder);
-        let path = root_path.join(cargolifter_core::get_crate_path(crate_name));
+        let path = root_path.join(cargolifter_core::utils::get_crate_path(crate_name));
         let path = path.join(crate_version);
         tracing::info!("trying to get '{}'", path.to_str().unwrap());
 
@@ -41,7 +41,7 @@ impl cargolifter_core::Storage for FileSystemStorage {
         data: &[u8],
     ) -> Result<(), cargolifter_core::models::StorageError> {
         let root_path = Path::new(&self.root_folder);
-        let path = root_path.join(cargolifter_core::get_crate_path(crate_name));
+        let path = root_path.join(cargolifter_core::utils::get_crate_path(crate_name));
         std::fs::create_dir_all(path.clone()).unwrap();
         let path = path.join(crate_version);
         tracing::info!("adding '{}' to storage", path.to_str().unwrap());

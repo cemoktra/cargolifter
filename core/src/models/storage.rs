@@ -17,12 +17,15 @@ impl std::convert::From<std::io::Error> for StorageError {
     }
 }
 
+/// Getting a crate from storage
 pub struct StorageGetRequest {
     pub crate_name: String,
     pub crate_version: String,
     pub result_sender: tokio::sync::oneshot::Sender<Option<Vec<u8>>>,
 }
 
+
+/// Putting a file to storage
 pub struct StoragePutRequest {
     pub crate_name: String,
     pub crate_version: String,

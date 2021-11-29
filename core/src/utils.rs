@@ -1,3 +1,21 @@
+/// get the path to store the crate in
+pub fn get_crate_path(name: &str) -> String {
+    match name.len() {
+        1 => "1".into(),
+        2 => "2".into(),
+        3 => format!("3/{}", name[0..1].to_string()),
+        _ => {
+            format!("{}/{}", name[0..2].to_string(), name[2..4].to_string())
+        }
+    }
+}
+
+/// get the path and filename to store the crate in
+pub fn get_crate_file_path(name: &str) -> String {
+    format!("{}/{}", get_crate_path(name), name)
+}
+
+// read existing versions
 pub fn read_versions(content: &str, encoding: &str) -> Vec<crate::models::PublishedVersion> {
     let content = content.replace("\n", "");
     let content = if encoding == "base64" {
@@ -13,6 +31,7 @@ pub fn read_versions(content: &str, encoding: &str) -> Vec<crate::models::Publis
         .collect()
 }
 
+// update yank status 
 pub fn updated_yanked(content: &str, encoding: &str, name: &str, vers: &str, yanked: bool) -> Option<String> {
     let mut versions = read_versions(content, encoding);
     let mut version_found = false;
@@ -42,6 +61,7 @@ pub fn updated_yanked(content: &str, encoding: &str, name: &str, vers: &str, yan
     Some(base64::encode(new_content))
 }
 
+// add a version
 pub fn add_version(new_version: crate::models::PublishedVersion, content: &str, encoding: &str) -> String {
     let mut versions = read_versions(content, encoding);
 
@@ -60,4 +80,28 @@ pub fn add_version(new_version: crate::models::PublishedVersion, content: &str, 
         .collect::<Vec<String>>()
         .join("\n");
     base64::encode(new_content)
+}
+
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_crate_file_path_1() {
+        assert_eq!("1/A", super::get_crate_file_path("A"));
+    }
+
+    #[test]
+    fn test_crate_file_path_2() {
+        assert_eq!("2/AB", super::get_crate_file_path("AB"));
+    }
+
+    #[test]
+    fn test_crate_file_path_3() {
+        assert_eq!("3/A/ABC", super::get_crate_file_path("ABC"));
+    }
+
+    #[test]
+    fn test_crate_file_path_more() {
+        assert_eq!("AB/CD/ABCDE", super::get_crate_file_path("ABCDE"));
+    }
 }

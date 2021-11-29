@@ -44,7 +44,7 @@ impl cargolifter_core::Storage for S3Storage {
         crate_version: &str,
     ) -> Result<Vec<u8>, cargolifter_core::models::StorageError> {
         let path = PathBuf::new();
-        let path = path.join(cargolifter_core::get_crate_path(crate_name));
+        let path = path.join(cargolifter_core::utils::get_crate_path(crate_name));
         let path = path.join(crate_version);
         tracing::info!("trying to get '{}'", path.to_str().unwrap());
 
@@ -74,7 +74,7 @@ impl cargolifter_core::Storage for S3Storage {
         data: &[u8],
     ) -> Result<(), cargolifter_core::models::StorageError> {
         let path = PathBuf::new();
-        let path = path.join(cargolifter_core::get_crate_path(crate_name));
+        let path = path.join(cargolifter_core::utils::get_crate_path(crate_name));
         let path = path.join(crate_version);
         tracing::info!("adding '{}' to storage", path.to_str().unwrap());
 
