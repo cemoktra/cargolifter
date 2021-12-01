@@ -32,7 +32,7 @@ pub struct Request {
 #[derive(Debug, Deserialize)]
 pub struct Response {
     pub id: i32,
-    pub iid: i32,
+    pub iid: u64,
     pub project_id: i32,
     pub title: String,
     // TODO: this is incomplete model, but actually we just need the id

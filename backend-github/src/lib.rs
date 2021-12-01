@@ -2,7 +2,7 @@ mod api;
 mod models;
 
 use async_trait::async_trait;
-use cargolifter_core::models::{PublishRequest, PublishedVersion};
+use cargolifter_core::models::PublishedVersion;
 use cargolifter_core::Backend;
 
 pub struct Github {
@@ -18,7 +18,9 @@ impl Github {
             cargoliter_token: config.cargolifter_token,
             project_id: [config.owner, config.repo].join("/"),
             host: config.host.clone(),
-            default_branch: config.default_branch.unwrap_or_else(|| String::from("main")),
+            default_branch: config
+                .default_branch
+                .unwrap_or_else(|| String::from("main")),
         }
     }
 
@@ -27,16 +29,12 @@ impl Github {
         self.host.as_ref().unwrap_or(&default_host).into()
     }
 
-    async fn merge_change(
-        &self,
-        token: &str,
-        name: &str,
-        vers: &str,
-        title: &str,
-    ) -> Result<(), reqwest::Error> {
-        let branch_name = format!("{}-{}", name, vers);
-
+    fn config(&self, token: &str) -> (String, String, String) {
         let credentials = token.split(':').collect::<Vec<_>>();
+        (credentials[0].into(), credentials[1].into(), self.host())
+    }
+
+    fn merge_config(&self, token: &str) -> (String, String, String) {
         let owned_token = token.to_owned();
         let merge_credentials = self
             .cargoliter_token
@@ -44,402 +42,236 @@ impl Github {
             .unwrap_or(&owned_token)
             .split(':')
             .collect::<Vec<_>>();
-        let host = self.host();
+        (merge_credentials[0].into(), merge_credentials[1].into(), self.host())
+    }
+}
 
-        tracing::info!("creating PR for branch '{}'!", branch_name);
+#[async_trait]
+impl Backend for Github {
+    async fn get_file(
+        &self,
+        token: &str,
+        crate_path: &str,
+    ) -> Result<(String, String, String), reqwest::Error> {
+        let (username, password, host) = self.config(token);
+
+        match api::get_file(
+            &host,
+            &username,
+            &password,
+            &self.project_id,
+            &crate_path,
+            &self.default_branch,
+        )
+        .await
+        {
+            Ok(response) => Ok((
+                response.content, 
+                response.encoding,
+                response.sha,
+            )),
+            Err(e) => Err(e),
+        }
+    }
+
+    async fn create_file(
+        &self,
+        token: &str,
+        crate_path: &str,
+        branch_name: &str,
+        initial_version: &PublishedVersion,
+    ) -> Result<(), reqwest::Error> {
+        let (username, token, host) = self.config(token);
+
+        let main_branch = api::get_branch(
+            &host,
+            &username,
+            &token,
+            &self.project_id,
+            &self.default_branch,
+        )
+        .await?;
+        api::create_branch(
+            &host,
+            &username,
+            &token,
+            &self.project_id,
+            crate::models::create_branch::Request {
+                r#ref: format!("refs/heads/{}", branch_name),
+                sha: main_branch.commit.sha,
+            },
+        )
+        .await?;
+
+        let json = serde_json::to_string(&initial_version).unwrap();
+        let encoded_content = base64::encode(json);
+        let create_request = crate::models::update_file::Request {
+            branch: Some(branch_name.into()),
+            content: encoded_content,
+            message: format!("Adding {} {}", initial_version.name, initial_version.vers),
+            ..Default::default()
+        };
+
+        match api::update_file(
+            &host,
+            &username,
+            &token,
+            &self.project_id,
+            &crate_path,
+            &create_request,
+        )
+        .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
+    async fn update_file(
+        &self,
+        token: &str,
+        crate_path: &str,
+        branch_name: &str,
+        versions: &[PublishedVersion],
+        current_sha: &str,
+    ) -> Result<(), reqwest::Error> {
+        let (username, token, host) = self.config(token);
+
+        let new_content = versions
+            .iter()
+            .map(|v| serde_json::to_string(v).unwrap())
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        let update_request = crate::models::update_file::Request {
+            branch: Some(branch_name.into()),
+            content: base64::encode(new_content),
+            message: format!("Adding {} {}", versions[0].name, versions[0].vers),
+            sha: Some(current_sha.into()),
+            ..Default::default()
+        };
+
+        let main_branch = api::get_branch(
+            &host,
+            &username,
+            &token,
+            &self.project_id,
+            &self.default_branch,
+        )
+        .await?;
+        api::create_branch(
+            &host,
+            &username,
+            &token,
+            &self.project_id,
+            crate::models::create_branch::Request {
+                r#ref: format!("refs/heads/{}", branch_name),
+                sha: main_branch.commit.sha,
+            },
+        )
+        .await?;
+
+        match api::update_file(
+            &host,
+            &username,
+            &token,
+            &self.project_id,
+            &crate_path,
+            &update_request,
+        )
+        .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
+    async fn delete_branch(
+        &self,
+        token: &str,
+        branch_name: &str,
+    ) -> Result<(), reqwest::Error>
+    {
+        let (username, token, host) = self.config(token);
+
+        match api::delete_branch(
+            &host,
+            &username,
+            &token,
+            &self.project_id,
+            &branch_name,
+        ).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
+    async fn create_pull_request(
+        &self,
+        token: &str,
+        title: &str,
+        branch_name: &str,
+    ) -> Result<u64, reqwest::Error> {
+        let (username, token, host) = self.config(token);
+
         let pull_request = models::create_pull_request::Request {
             title: title.into(),
-            head: branch_name.clone(),
+            head: branch_name.into(),
             base: self.default_branch.clone(),
             ..Default::default()
         };
 
         match api::create_pull_request(
             &host,
-            credentials[0],
-            credentials[1],
+            &username,
+            &token,
             &self.project_id,
             pull_request,
         )
-        .await
-        {
-            Ok(pull_response) => {
-                tracing::info!("merging pull request #{}", pull_response.number);
-                let merge_request = crate::models::merge_pull_request::Request::default();
-                match api::merge_pull_request(
-                    &host,
-                    merge_credentials[0],
-                    merge_credentials[1],
-                    &self.project_id,
-                    pull_response.number,
-                    merge_request,
-                )
-                .await
-                {
-                    Ok(_) => {
-                        api::delete_branch(
-                            &host,
-                            credentials[0],
-                            credentials[1],
-                            &self.project_id,
-                            &branch_name,
-                        )
-                        .await?;
-                        Ok(())
-                    }
-                    Err(e) => {
-                        tracing::error!("failed to merhe MR - deleting branch");
-                        api::close_pull_request(
-                            &host,
-                            credentials[0],
-                            credentials[1],
-                            &self.project_id,
-                            pull_response.number,
-                        )
-                        .await?;
-                        api::delete_branch(
-                            &host,
-                            credentials[0],
-                            credentials[1],
-                            &self.project_id,
-                            &branch_name,
-                        )
-                        .await?;
-                        Err(e)
-                    }
-                }
-            }
-            Err(e) => {
-                tracing::error!("failed to create MR - deleting branch");
-                api::delete_branch(
-                    &host,
-                    credentials[0],
-                    credentials[1],
-                    &self.project_id,
-                    &branch_name,
-                )
-                .await?;
-                Err(e)
-            }
+        .await {
+            Ok(response) => Ok(response.number),
+            Err(e) => Err(e),
         }
     }
-}
 
-#[async_trait]
-impl Backend for Github {
-    async fn publish_crate(
+    async fn merge_pull_request(
         &self,
         token: &str,
-        request: &PublishRequest,
+        id: u64,
     ) -> Result<(), reqwest::Error> {
-        let crate_path = request.meta.crate_file_path();
-        let branch_name = format!("{}-{}", request.meta.name, request.meta.vers);
+        let (username, token, host) = self.merge_config(token);
 
-        let credentials = token.split(':').collect::<Vec<_>>();
-        let host = self.host();
+        let merge_request = crate::models::merge_pull_request::Request::default();
 
-        match api::get_file(
+        match api::merge_pull_request(
             &host,
-            credentials[0],
-            credentials[1],
+            &username,
+            &token,
             &self.project_id,
-            &crate_path,
-            &self.default_branch,
-        )
-        .await
-        {
-            Ok(response) => {
-                tracing::info!("'{}' already found! updating!", crate_path);
-                let update_request = crate::models::update_file::Request {
-                    branch: Some(branch_name.clone()),
-                    content: cargolifter_core::utils::add_version(
-                        request.into(),
-                        &response.content,
-                        &response.encoding,
-                    ),
-                    message: format!("Adding {} {}", request.meta.name, request.meta.vers),
-                    sha: Some(response.sha),
-                    ..Default::default()
-                };
-
-                let main_branch = api::get_branch(
-                    &host,
-                    credentials[0],
-                    credentials[1],
-                    &self.project_id,
-                    &self.default_branch,
-                )
-                .await?;
-                api::create_branch(
-                    &host,
-                    credentials[0],
-                    credentials[1],
-                    &self.project_id,
-                    crate::models::create_branch::Request {
-                        r#ref: format!("refs/heads/{}", branch_name),
-                        sha: main_branch.commit.sha,
-                    },
-                )
-                .await?;
-
-                match api::update_file(
-                    &host,
-                    credentials[0],
-                    credentials[1],
-                    &self.project_id,
-                    &crate_path,
-                    &update_request,
-                )
-                .await
-                {
-                    Ok(_) => {}
-                    Err(e) => {
-                        tracing::error!("failed to udate file - deleting branch");
-                        api::delete_branch(
-                            &host,
-                            credentials[0],
-                            credentials[1],
-                            &self.project_id,
-                            &branch_name,
-                        )
-                        .await?;
-                        return Err(e);
-                    }
-                }
-            }
-            Err(_) => {
-                tracing::info!("'{}' not found! creating!", crate_path);
-                let main_branch = api::get_branch(
-                    &host,
-                    credentials[0],
-                    credentials[1],
-                    &self.project_id,
-                    &self.default_branch,
-                )
-                .await?;
-                api::create_branch(
-                    &host,
-                    credentials[0],
-                    credentials[1],
-                    &self.project_id,
-                    crate::models::create_branch::Request {
-                        r#ref: format!("refs/heads/{}", branch_name),
-                        sha: main_branch.commit.sha,
-                    },
-                )
-                .await?;
-
-                let initial_version: PublishedVersion = request.into();
-                let json = serde_json::to_string(&initial_version).unwrap();
-                let encoded_content = base64::encode(json);
-                let create_request = crate::models::update_file::Request {
-                    branch: Some(branch_name.clone()),
-                    content: encoded_content,
-                    message: format!("Adding {} {}", request.meta.name, request.meta.vers),
-                    ..Default::default()
-                };
-
-                match api::update_file(
-                    &host,
-                    credentials[0],
-                    credentials[1],
-                    &self.project_id,
-                    &crate_path,
-                    &create_request,
-                )
-                .await
-                {
-                    Ok(_) => {}
-                    Err(e) => {
-                        tracing::error!("failed to udate file - deleting branch");
-                        api::delete_branch(
-                            &host,
-                            credentials[0],
-                            credentials[1],
-                            &self.project_id,
-                            &branch_name,
-                        )
-                        .await?;
-                        return Err(e);
-                    }
-                }
-            }
+            id,
+            merge_request,
+        ).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
         }
-
-        self.merge_change(
-            token,
-            &request.meta.name,
-            &request.meta.vers,
-            &format!("{}-{}", request.meta.name, request.meta.vers),
-        )
-        .await?;
-        tracing::info!("{} publishes successfully", crate_path);
-        Ok(())
     }
 
-    async fn yank_crate(
+    async fn delete_pull_request(
         &self,
         token: &str,
-        request: &cargolifter_core::models::YankRequest,
+        id: u64,
     ) -> Result<(), reqwest::Error> {
-        let crate_path = cargolifter_core::get_crate_file_path(&request.name);
-        let branch_name = format!(
-            "{}-{}-{}",
-            if request.yank { "yank" } else { "unyank" },
-            request.name,
-            request.vers
-        );
+        let (username, token, host) = self.config(token);
 
-        let credentials = token.split(':').collect::<Vec<_>>();
-        let default_host = String::from("https://api.github.com");
-        let host = self.host.as_ref().unwrap_or(&default_host);
-
-        match api::get_file(
-            host,
-            credentials[0],
-            credentials[1],
+        api::close_pull_request(
+            &host,
+            &username,
+            &token,
             &self.project_id,
-            &crate_path,
-            &self.default_branch,
-        )
-        .await
-        {
-            Ok(response) => {
-                match cargolifter_core::utils::updated_yanked(
-                    &response.content,
-                    &response.encoding,
-                    &request.name,
-                    &request.vers,
-                    request.yank,
-                ) {
-                    Some(encoded_content) => {
-                        let update_request = crate::models::update_file::Request {
-                            branch: Some(branch_name.clone()),
-                            content: encoded_content,
-                            message: format!(
-                                "{} {} {}",
-                                if request.yank { "yanking" } else { "unyanking" },
-                                request.name,
-                                request.vers
-                            ),
-                            sha: Some(response.sha),
-                            ..Default::default()
-                        };
-
-                        let main_branch = api::get_branch(
-                            host,
-                            credentials[0],
-                            credentials[1],
-                            &self.project_id,
-                            &self.default_branch,
-                        )
-                        .await?;
-                        api::create_branch(
-                            host,
-                            credentials[0],
-                            credentials[1],
-                            &self.project_id,
-                            crate::models::create_branch::Request {
-                                r#ref: format!("refs/heads/{}", branch_name),
-                                sha: main_branch.commit.sha,
-                            },
-                        )
-                        .await?;
-
-                        match api::update_file(
-                            host,
-                            credentials[0],
-                            credentials[1],
-                            &self.project_id,
-                            &crate_path,
-                            &update_request,
-                        )
-                        .await
-                        {
-                            Ok(_) => {}
-                            Err(e) => {
-                                tracing::error!("failed to udate file - deleting branch");
-                                api::delete_branch(
-                                    host,
-                                    credentials[0],
-                                    credentials[1],
-                                    &self.project_id,
-                                    &branch_name,
-                                )
-                                .await?;
-                                return Err(e);
-                            }
-                        }
-                    }
-                    None => return Ok(()),
-                }
-            }
-            Err(e) => {
-                tracing::error!("crate {} not found", request.name);
-                return Err(e);
-            }
-        }
-
-        self.merge_change(
-            token,
-            &request.name,
-            &request.vers,
-            &format!(
-                "{}-{}-{}",
-                if request.yank { "yank" } else { "unyank" },
-                request.name,
-                request.vers
-            ),
+            id,
         )
         .await?;
 
-        tracing::info!(
-            "{} {} successfully",
-            crate_path,
-            if request.yank { "yanked" } else { "unyanked" }
-        );
-
-        Ok(())
-    }
-
-    async fn is_version_published(
-        &self,
-        token: &str,
-        crate_name: &str,
-        crate_version: &str,
-    ) -> Result<bool, reqwest::Error> {
-        let crate_path = cargolifter_core::get_crate_file_path(crate_name);
-
-        let credentials = token.split(':').collect::<Vec<_>>();
-        let host = self.host();
-
-        tracing::info!(
-            "checking if version {} of {} has been published",
-            crate_version,
-            crate_name
-        );
-
-        match api::get_file(
-            &host,
-            credentials[0],
-            credentials[1],
-            &self.project_id,
-            &crate_path,
-            &self.default_branch,
-        )
-        .await
-        {
-            Ok(response) => {
-                let versions =
-                    cargolifter_core::utils::read_versions(&response.content, &response.encoding);
-                Ok(versions
-                    .iter()
-                    .any(|v| v.name == crate_name && v.vers == crate_version))
-            }
-            Err(e) => {
-                tracing::error!("crate {} not found", crate_name);
-                Err(e)
-            }
-        }
+        todo!()
     }
 }

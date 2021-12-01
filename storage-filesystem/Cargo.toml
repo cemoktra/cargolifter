@@ -1,6 +1,6 @@
 [package]
 name = "cargolifter-storage-filesystem"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 
 
@@ -15,5 +15,5 @@ readme = "README.md"
 
 [dependencies]
 async-trait = "0.1"
-cargolifter-core = "0.2"
+cargolifter-core = "0.3"
 tracing = "0.1"

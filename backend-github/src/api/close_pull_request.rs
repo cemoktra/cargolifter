@@ -3,7 +3,7 @@ pub async fn close_pull_request(
     username: &str,
     token: &str,
     project_id: &str,
-    pull_id: i64,
+    pull_id: u64,
 ) -> Result<crate::models::close_pull_request::Response, reqwest::Error> {
     let url = format!("{}/repos/{}/pulls/{}", url, project_id, pull_id);
     let client = reqwest::Client::new();

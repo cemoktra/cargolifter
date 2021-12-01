@@ -1,8 +1,10 @@
+pub mod commands;
 pub mod config;
 pub mod models;
-pub mod utils;
 
 use async_trait::async_trait;
+use commands::{publish, is_published, yank};
+use models::PublishedVersion;
 
 pub enum BackendCommand {
     Publish(
@@ -30,23 +32,53 @@ pub enum StorageCommand {
 
 #[async_trait]
 pub trait Backend {
-    async fn publish_crate(
+    async fn get_file(
         &self,
         token: &str,
-        request: &models::PublishRequest,
+        crate_path: &str,
+    ) -> Result<(String, String, String), reqwest::Error>;
+
+    async fn create_file(
+        &self,
+        token: &str,
+        crate_path: &str,
+        branch_name: &str,
+        version: &PublishedVersion,
     ) -> Result<(), reqwest::Error>;
 
-    async fn yank_crate(
+    async fn update_file(
         &self,
         token: &str,
-        request: &models::YankRequest,
+        crate_path: &str,
+        branch_name: &str,
+        versions: &[PublishedVersion],
+        current_sha: &str,
     ) -> Result<(), reqwest::Error>;
-    async fn is_version_published(
+
+    async fn delete_branch(
         &self,
         token: &str,
-        crate_name: &str,
-        crate_version: &str,
-    ) -> Result<bool, reqwest::Error>;
+        branch_name: &str,
+    ) -> Result<(), reqwest::Error>;
+
+    async fn create_pull_request(
+        &self,
+        token: &str,
+        title: &str,
+        branch_name: &str,
+    ) -> Result<u64, reqwest::Error>;
+
+    async fn merge_pull_request(
+        &self,
+        token: &str,
+        id: u64,
+    ) -> Result<(), reqwest::Error>;
+
+    async fn delete_pull_request(
+        &self,
+        token: &str,
+        id: u64,
+    ) -> Result<(), reqwest::Error>;
 }
 
 #[async_trait]
@@ -100,7 +132,7 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
                 match receiver.recv().await {
                     Some(command) => match command {
                         BackendCommand::Publish(token, req, sender) => {
-                            match self.backend.publish_crate(&token, &req).await {
+                            match publish::execute(&self.backend, &token, &req).await {
                                 Ok(_) => {
                                     if sender.send(true).is_err() {
                                         tracing::error!("Failed to send publish result!");
@@ -115,7 +147,7 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
                             }
                         }
                         BackendCommand::Yank(token, req, sender) => {
-                            match self.backend.yank_crate(&token, &req).await {
+                            match yank::execute(&self.backend, &token, &req).await {
                                 Ok(_) => {
                                     if sender.send(true).is_err() {
                                         tracing::error!("Failed to send yank result!");
@@ -130,9 +162,9 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
                             }
                         }
                         BackendCommand::IsVersionPublished(token, name, version, sender) => {
-                            match self.backend.is_version_published(&token, &name, &version).await {
-                                Ok(_) => {
-                                    if sender.send(true).is_err() {
+                            match is_published::execute(&self.backend, &token, &name, &version).await {
+                                Ok(result) => {
+                                    if sender.send(result).is_err() {
                                         tracing::error!("Failed to send isPublished result!");
                                     }
                                 }
