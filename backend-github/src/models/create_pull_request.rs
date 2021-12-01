@@ -18,6 +18,6 @@ pub struct Request {
 pub struct Response {
     pub url: String,
     pub id: i64,
-    pub number: i64,
+    pub number: u64,
     // omttited
 }

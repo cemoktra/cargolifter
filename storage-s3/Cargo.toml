@@ -1,6 +1,6 @@
 [package]
 name = "cargolifter-storage-s3"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 
 
@@ -19,5 +19,5 @@ aws-config = "0.0.26-alpha"
 aws-sdk-s3 = "0.0.26-alpha"
 aws-types = "0.0.26-alpha"
 bytes = "1.1"
-cargolifter-core = "0.2"
+cargolifter-core = "0.3"
 tracing = "0.1"

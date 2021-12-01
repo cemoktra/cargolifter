@@ -6,7 +6,7 @@ pub async fn update_file(
     request: &crate::models::update_file::Request,
 ) -> Result<crate::models::update_file::Response, reqwest::Error> {
     let url = format!(
-        "{}/api/v4/projects/{}/files/{}",
+        "{}/api/v4/projects/{}/repository/files/{}",
         host,
         project_id,
         urlencoding::encode(file)

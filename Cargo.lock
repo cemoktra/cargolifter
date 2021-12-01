@@ -428,7 +428,7 @@ dependencies = [
 
 [[package]]
 name = "cargolifter"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "argh",
  "cargolifter-backend-github",
@@ -446,7 +446,7 @@ dependencies = [
 
 [[package]]
 name = "cargolifter-backend-github"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "base64",
@@ -460,7 +460,7 @@ dependencies = [
 
 [[package]]
 name = "cargolifter-backend-gitlab"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "base64",
@@ -475,7 +475,7 @@ dependencies = [
 
 [[package]]
 name = "cargolifter-core"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "base64",
@@ -490,7 +490,7 @@ dependencies = [
 
 [[package]]
 name = "cargolifter-storage-filesystem"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "cargolifter-core",
@@ -499,7 +499,7 @@ dependencies = [
 
 [[package]]
 name = "cargolifter-storage-s3"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "aws-config",
@@ -512,7 +512,7 @@ dependencies = [
 
 [[package]]
 name = "cargolifter-web"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "axum",
  "bytes",

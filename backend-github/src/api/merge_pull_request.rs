@@ -3,7 +3,7 @@ pub async fn merge_pull_request(
     username: &str,
     token: &str,
     project_id: &str,
-    pull_id: i64,
+    pull_id: u64,
     request: crate::models::merge_pull_request::Request,
 ) -> Result<crate::models::merge_pull_request::Response, reqwest::Error> {
     let url = format!("{}/repos/{}/pulls/{}/merge", url, project_id, pull_id);

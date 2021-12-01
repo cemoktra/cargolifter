@@ -11,7 +11,6 @@ pub async fn get_file(
         project_id,
         urlencoding::encode(file)
     );
-    tracing::info!("calling {}", url);
     let client = reqwest::Client::new();
     client
         .get(url)
