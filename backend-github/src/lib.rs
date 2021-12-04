@@ -64,7 +64,7 @@ impl Backend for Github {
             &username,
             &password,
             &self.project_id,
-            &crate_path,
+            crate_path,
             &self.default_branch,
         )
         .await
@@ -117,7 +117,7 @@ impl Backend for Github {
             &username,
             &token,
             &self.project_id,
-            &crate_path,
+            crate_path,
             &create_request,
         )
         .await
@@ -176,7 +176,7 @@ impl Backend for Github {
             &username,
             &token,
             &self.project_id,
-            &crate_path,
+            crate_path,
             &update_request,
         )
         .await
@@ -189,7 +189,7 @@ impl Backend for Github {
     async fn delete_branch(&self, token: &str, branch_name: &str) -> Result<(), reqwest::Error> {
         let (username, token, host) = self.config(token);
 
-        match api::delete_branch(&host, &username, &token, &self.project_id, &branch_name).await {
+        match api::delete_branch(&host, &username, &token, &self.project_id, branch_name).await {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }

@@ -36,7 +36,7 @@ impl Backend for Gitea {
             &self.host,
             token,
             &self.project_id,
-            &crate_path,
+            crate_path,
             &self.default_branch,
         )
         .await
@@ -69,7 +69,7 @@ impl Backend for Gitea {
             &self.host,
             token,
             &self.project_id,
-            &crate_path,
+            crate_path,
             &create_request,
         )
         .await
@@ -104,7 +104,7 @@ impl Backend for Gitea {
             &self.host,
             token,
             &self.project_id,
-            &crate_path,
+        crate_path,
             &update_request,
         )
         .await
@@ -115,7 +115,7 @@ impl Backend for Gitea {
     }
 
     async fn delete_branch(&self, token: &str, branch_name: &str) -> Result<(), reqwest::Error> {
-        match api::delete_branch(&self.host, token, &self.project_id, &branch_name.clone()).await {
+        match api::delete_branch(&self.host, token, &self.project_id, branch_name).await {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
@@ -145,7 +145,6 @@ impl Backend for Gitea {
         let accept_request = models::accept_merge_request::Request {
             r#do: "merge".into(),
             delete_branch_after_merge: Some(false),
-            ..Default::default()
         };
 
         match api::accept_merge_request(

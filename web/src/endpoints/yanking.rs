@@ -53,7 +53,7 @@ async fn yank_at_backend(
 ) -> Result<(), axum::http::StatusCode> {
     let (tx, rx) = tokio::sync::oneshot::channel::<bool>();
     match backend
-        .send(BackendCommand::Yank(token.into(), request, tx))
+        .send(BackendCommand::Yank(token.into(), Box::new(request), tx))
         .await
     {
         Ok(_) => match rx.await {

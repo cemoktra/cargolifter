@@ -43,7 +43,7 @@ impl Backend for Gitlab {
             &host,
             token,
             self.project_id,
-            &crate_path,
+            crate_path,
             &self.default_branch,
         )
         .await
@@ -73,7 +73,7 @@ impl Backend for Gitlab {
             ..Default::default()
         };
 
-        match api::create_file(&host, token, self.project_id, &crate_path, &create_request).await {
+        match api::create_file(&host, token, self.project_id, crate_path, &create_request).await {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
@@ -103,7 +103,7 @@ impl Backend for Gitlab {
             commit_message: format!("Adding {} {}", versions[0].name, versions[0].vers),
             ..Default::default()
         };
-        match api::update_file(&host, token, self.project_id, &crate_path, &update_request).await {
+        match api::update_file(&host, token, self.project_id, crate_path, &update_request).await {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
@@ -112,7 +112,7 @@ impl Backend for Gitlab {
     async fn delete_branch(&self, token: &str, branch_name: &str) -> Result<(), reqwest::Error> {
         let host = self.host();
 
-        match api::delete_branch(&host, token, self.project_id, &branch_name.clone()).await {
+        match api::delete_branch(&host, token, self.project_id, branch_name).await {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }

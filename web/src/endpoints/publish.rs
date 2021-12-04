@@ -128,7 +128,7 @@ async fn publish_to_backend(
 ) -> Result<(), axum::http::StatusCode> {
     let (tx, rx) = tokio::sync::oneshot::channel::<bool>();
     match backend
-        .send(BackendCommand::Publish(token.into(), request, tx))
+        .send(BackendCommand::Publish(token.into(), Box::new(request), tx))
         .await
     {
         Ok(_) => match rx.await {

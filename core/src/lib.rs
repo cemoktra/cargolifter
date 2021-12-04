@@ -9,12 +9,12 @@ use models::PublishedVersion;
 pub enum BackendCommand {
     Publish(
         String,
-        models::PublishRequest,
+        Box<models::PublishRequest>,
         tokio::sync::oneshot::Sender<bool>,
     ),
     Yank(
         String,
-        models::YankRequest,
+        Box<models::YankRequest>,
         tokio::sync::oneshot::Sender<bool>,
     ),
     IsVersionPublished(String, String, String, tokio::sync::oneshot::Sender<bool>),
