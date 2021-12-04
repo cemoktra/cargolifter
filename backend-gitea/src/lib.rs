@@ -104,7 +104,7 @@ impl Backend for Gitea {
             &self.host,
             token,
             &self.project_id,
-        crate_path,
+            crate_path,
             &update_request,
         )
         .await
