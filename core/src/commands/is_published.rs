@@ -14,7 +14,7 @@ pub async fn execute(
                 .any(|v| v.name == crate_name && v.vers == crate_version))
         }
         Err(e) => {
-            tracing::error!("crate {} not found", crate_name);
+            tracing::info!("crate {} not found => not published", crate_name);
             Err(e)
         }
     }

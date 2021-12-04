@@ -37,12 +37,12 @@ pub async fn execute(
         Err(_) => {
             tracing::info!("'{}' not found! creating!", crate_path);
             let initial_version: crate::models::PublishedVersion = request.into();
-            if backend
+            if let Err(e) = backend
                 .create_file(token, &crate_path, &branch_name, &initial_version)
                 .await
-                .is_err()
             {
                 let _ = backend.delete_branch(token, &branch_name).await;
+                return Err(e);
             }
         }
     }

@@ -1,0 +1,23 @@
+[package]
+name = "cargolifter-backend-gitea"
+version = "0.1.0"
+edition = "2021"
+
+description = "CargoLifter Gitea backend"
+homepage = "https://github.com/cemoktra/cargolifter"
+repository = "https://github.com/cemoktra/cargolifter"
+keywords = ["registy", "cargo", "gitea"]
+license = "GPL-2.0"
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1"
+base64 = "0.13"
+cargolifter-core = "0.3"
+reqwest = { version = "0.11", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.14.0", features = ["full"] }
+tracing = "0.1"

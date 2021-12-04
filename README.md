@@ -6,6 +6,7 @@ This project offers an implementation of an alternate registry. Instead of havin
 
 - Github
 - Gitlab
+- Gitea (e.g. codederg)
 
 CargoLifter uses access tokens for interacting with the backend. So each action will be impersonated. This of course requires write access and this is the way to limit.
 
