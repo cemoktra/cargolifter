@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct Request {
     pub title: String,
     pub base: String,
-    pub head: String,    
+    pub head: String,
 }
 
 #[derive(Debug, Deserialize)]

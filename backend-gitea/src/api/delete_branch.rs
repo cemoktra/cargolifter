@@ -6,10 +6,7 @@ pub async fn delete_branch(
     project_id: &str,
     branch: &str,
 ) -> Result<(), reqwest::Error> {
-    let url = format!(
-        "{}/api/v1/repos/{}/branches/{}",
-        host, project_id, branch
-    );
+    let url = format!("{}/api/v1/repos/{}/branches/{}", host, project_id, branch);
     let client = reqwest::Client::new();
     client
         .delete(url)

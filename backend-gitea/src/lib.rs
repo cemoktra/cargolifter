@@ -32,7 +32,6 @@ impl Backend for Gitea {
         token: &str,
         crate_path: &str,
     ) -> Result<(String, String, String), reqwest::Error> {
-
         match api::get_file(
             &self.host,
             token,
@@ -58,12 +57,23 @@ impl Backend for Gitea {
         let encoded_content = base64::encode(json);
         let create_request = crate::models::create_file::Request {
             branch: Some(self.default_branch.clone()),
-            new_branch: Some(branch_name.into()),           
+            new_branch: Some(branch_name.into()),
             content: encoded_content,
-            message: Some(format!("Adding {} {}", initial_version.name, initial_version.vers)),
+            message: Some(format!(
+                "Adding {} {}",
+                initial_version.name, initial_version.vers
+            )),
         };
 
-        match api::create_file(&self.host, token, &self.project_id, &crate_path, &create_request).await {
+        match api::create_file(
+            &self.host,
+            token,
+            &self.project_id,
+            &crate_path,
+            &create_request,
+        )
+        .await
+        {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
@@ -90,7 +100,15 @@ impl Backend for Gitea {
             message: Some(format!("Adding {} {}", versions[0].name, versions[0].vers)),
             sha: current_sha.into(),
         };
-        match api::update_file(&self.host, token, &self.project_id, &crate_path, &update_request).await {
+        match api::update_file(
+            &self.host,
+            token,
+            &self.project_id,
+            &crate_path,
+            &update_request,
+        )
+        .await
+        {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
@@ -130,8 +148,14 @@ impl Backend for Gitea {
             ..Default::default()
         };
 
-        match api::accept_merge_request(&self.host, merge_token, &self.project_id, id, &accept_request)
-            .await
+        match api::accept_merge_request(
+            &self.host,
+            merge_token,
+            &self.project_id,
+            id,
+            &accept_request,
+        )
+        .await
         {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
