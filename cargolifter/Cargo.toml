@@ -16,6 +16,7 @@ license = "GPL-2.0"
 [dependencies]
 argh = "0.1"
 cargolifter-core = "0.3"
+cargolifter-backend-gitea = "0.1"
 cargolifter-backend-gitlab = "0.2"
 cargolifter-backend-github = "0.2"
 cargolifter-storage-filesystem = "0.3"

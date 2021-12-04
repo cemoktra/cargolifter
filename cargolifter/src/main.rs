@@ -1,4 +1,5 @@
 use argh::FromArgs;
+use cargolifter_backend_gitea::Gitea;
 use cargolifter_backend_github::Github;
 use cargolifter_backend_gitlab::Gitlab;
 use cargolifter_core::{BackendService, StorageService};
@@ -27,6 +28,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         serde_json::from_reader(std::io::BufReader::new(file))?;
 
     let (backend_handle, backend_sender) = match config.backend {
+        cargolifter_core::config::BackendType::Gitea(config) => {
+            let gitlab = Gitea::from(config);
+            let backend = BackendService::new(gitlab);
+            backend.run()
+        }
         cargolifter_core::config::BackendType::Github(config) => {
             let github = Github::from(config);
             let backend = BackendService::new(github);

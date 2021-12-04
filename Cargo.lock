@@ -431,6 +431,7 @@ name = "cargolifter"
 version = "0.5.2"
 dependencies = [
  "argh",
+ "cargolifter-backend-gitea",
  "cargolifter-backend-github",
  "cargolifter-backend-gitlab",
  "cargolifter-core",
@@ -442,6 +443,20 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "cargolifter-backend-gitea"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64",
+ "cargolifter-core",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]

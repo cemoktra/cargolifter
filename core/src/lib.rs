@@ -137,7 +137,7 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
                                     }
                                 }
                                 Err(e) => {
-                                    tracing::error!("Publish failed: {}", e);
+                                    tracing::error!("Yank/Unyank failed: {}", e);
                                     if sender.send(false).is_err() {
                                         tracing::error!("Failed to send yank result!");
                                     }
@@ -153,8 +153,7 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
                                         tracing::error!("Failed to send isPublished result!");
                                     }
                                 }
-                                Err(e) => {
-                                    tracing::error!("Publish failed: {}", e);
+                                Err(_) => {
                                     if sender.send(false).is_err() {
                                         tracing::error!("Failed to send isPublished result!");
                                     }

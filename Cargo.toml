@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "backend-gitea",
     "backend-github",
     "backend-gitlab",
     "cargolifter",
@@ -15,6 +16,7 @@ exclude = [
 
 [patch.crates-io]
 cargolifter-core = { path = "core" }
+cargolifter-backend-gitea = { path = "backend-gitea" }
 cargolifter-backend-gitlab = { path = "backend-gitlab" }
 cargolifter-backend-github = { path = "backend-github" }
 cargolifter-storage-filesystem = { path = "storage-filesystem" }
