@@ -1,4 +1,8 @@
-pub async fn execute(backend: &impl crate::Backend, token: &str, request: &crate::models::PublishRequest) -> Result<(), reqwest::Error> {
+pub async fn execute(
+    backend: &impl crate::Backend,
+    token: &str,
+    request: &crate::models::PublishRequest,
+) -> Result<(), reqwest::Error> {
     let crate_path = crate::get_crate_file_path(&request.meta.name);
     let branch_name = format!("{}-{}", request.meta.name, request.meta.vers);
 
@@ -18,19 +22,29 @@ pub async fn execute(backend: &impl crate::Backend, token: &str, request: &crate
                 versions.push(new_version);
             }
 
-            if let Err(e) = backend.update_file(token, &crate_path, &branch_name, &versions, &sha).await {
-                tracing::error!("Failed to update file'{}' - deleting branch if exists!", crate_path);
+            if let Err(e) = backend
+                .update_file(token, &crate_path, &branch_name, &versions, &sha)
+                .await
+            {
+                tracing::error!(
+                    "Failed to update file'{}' - deleting branch if exists!",
+                    crate_path
+                );
                 let _ = backend.delete_branch(token, &branch_name).await;
                 return Err(e);
             }
-        },
+        }
         Err(_) => {
             tracing::info!("'{}' not found! creating!", crate_path);
             let initial_version: crate::models::PublishedVersion = request.into();
-            if backend.create_file(token, &crate_path, &branch_name, &initial_version).await.is_err() {
-                let _ = backend.delete_branch(token, & branch_name).await;
+            if backend
+                .create_file(token, &crate_path, &branch_name, &initial_version)
+                .await
+                .is_err()
+            {
+                let _ = backend.delete_branch(token, &branch_name).await;
             }
-        },
+        }
     }
 
     super::utils::merge_branch(backend, token, &branch_name).await

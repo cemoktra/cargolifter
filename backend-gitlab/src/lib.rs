@@ -48,11 +48,7 @@ impl Backend for Gitlab {
         )
         .await
         {
-            Ok(response) => Ok((
-                response.content, 
-                response.encoding,
-                response.content_sha256,
-            )),
+            Ok(response) => Ok((response.content, response.encoding, response.content_sha256)),
             Err(e) => Err(e),
         }
     }
@@ -113,12 +109,7 @@ impl Backend for Gitlab {
         }
     }
 
-    async fn delete_branch(
-        &self,
-        token: &str,
-        branch_name: &str,
-    ) -> Result<(), reqwest::Error>
-    {
+    async fn delete_branch(&self, token: &str, branch_name: &str) -> Result<(), reqwest::Error> {
         let host = self.host();
 
         match api::delete_branch(&host, token, self.project_id, &branch_name.clone()).await {
@@ -143,18 +134,12 @@ impl Backend for Gitlab {
             ..Default::default()
         };
         match api::create_merge_request(&host, token, self.project_id, &merge_request).await {
-            Ok(response) => {
-                Ok(response.iid)
-            },
+            Ok(response) => Ok(response.iid),
             Err(e) => Err(e),
         }
     }
 
-    async fn merge_pull_request(
-        &self,
-        token: &str,
-        id: u64,
-    ) -> Result<(), reqwest::Error> {
+    async fn merge_pull_request(&self, token: &str, id: u64) -> Result<(), reqwest::Error> {
         let host = self.host();
 
         let owned_token = token.to_owned();
@@ -165,25 +150,15 @@ impl Backend for Gitlab {
             ..Default::default()
         };
 
-        match api::accept_merge_request(
-            &host,
-            merge_token,
-            self.project_id,
-            id,
-            &accept_request,
-        )
-        .await
+        match api::accept_merge_request(&host, merge_token, self.project_id, id, &accept_request)
+            .await
         {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
     }
 
-    async fn delete_pull_request(
-        &self,
-        _token: &str,
-        _id: u64,
-    ) -> Result<(), reqwest::Error> {
+    async fn delete_pull_request(&self, _token: &str, _id: u64) -> Result<(), reqwest::Error> {
         Ok(())
     }
 }

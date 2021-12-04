@@ -8,9 +8,9 @@ pub struct Request {
 
 #[derive(Debug, Deserialize)]
 pub struct Object {
-    sha: String,
-    r#type: String,
-    url: String,
+    pub sha: String,
+    pub r#type: String,
+    pub url: String,
 }
 
 #[derive(Debug, Deserialize)]

@@ -42,7 +42,11 @@ impl Github {
             .unwrap_or(&owned_token)
             .split(':')
             .collect::<Vec<_>>();
-        (merge_credentials[0].into(), merge_credentials[1].into(), self.host())
+        (
+            merge_credentials[0].into(),
+            merge_credentials[1].into(),
+            self.host(),
+        )
     }
 }
 
@@ -65,11 +69,7 @@ impl Backend for Github {
         )
         .await
         {
-            Ok(response) => Ok((
-                response.content, 
-                response.encoding,
-                response.sha,
-            )),
+            Ok(response) => Ok((response.content, response.encoding, response.sha)),
             Err(e) => Err(e),
         }
     }
@@ -186,21 +186,10 @@ impl Backend for Github {
         }
     }
 
-    async fn delete_branch(
-        &self,
-        token: &str,
-        branch_name: &str,
-    ) -> Result<(), reqwest::Error>
-    {
+    async fn delete_branch(&self, token: &str, branch_name: &str) -> Result<(), reqwest::Error> {
         let (username, token, host) = self.config(token);
 
-        match api::delete_branch(
-            &host,
-            &username,
-            &token,
-            &self.project_id,
-            &branch_name,
-        ).await {
+        match api::delete_branch(&host, &username, &token, &self.project_id, &branch_name).await {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
@@ -221,24 +210,15 @@ impl Backend for Github {
             ..Default::default()
         };
 
-        match api::create_pull_request(
-            &host,
-            &username,
-            &token,
-            &self.project_id,
-            pull_request,
-        )
-        .await {
+        match api::create_pull_request(&host, &username, &token, &self.project_id, pull_request)
+            .await
+        {
             Ok(response) => Ok(response.number),
             Err(e) => Err(e),
         }
     }
 
-    async fn merge_pull_request(
-        &self,
-        token: &str,
-        id: u64,
-    ) -> Result<(), reqwest::Error> {
+    async fn merge_pull_request(&self, token: &str, id: u64) -> Result<(), reqwest::Error> {
         let (username, token, host) = self.merge_config(token);
 
         let merge_request = crate::models::merge_pull_request::Request::default();
@@ -250,27 +230,18 @@ impl Backend for Github {
             &self.project_id,
             id,
             merge_request,
-        ).await {
+        )
+        .await
+        {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
     }
 
-    async fn delete_pull_request(
-        &self,
-        token: &str,
-        id: u64,
-    ) -> Result<(), reqwest::Error> {
+    async fn delete_pull_request(&self, token: &str, id: u64) -> Result<(), reqwest::Error> {
         let (username, token, host) = self.config(token);
 
-        api::close_pull_request(
-            &host,
-            &username,
-            &token,
-            &self.project_id,
-            id,
-        )
-        .await?;
+        api::close_pull_request(&host, &username, &token, &self.project_id, id).await?;
 
         todo!()
     }

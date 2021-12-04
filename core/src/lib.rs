@@ -3,7 +3,7 @@ pub mod config;
 pub mod models;
 
 use async_trait::async_trait;
-use commands::{publish, is_published, yank};
+use commands::{is_published, publish, yank};
 use models::PublishedVersion;
 
 pub enum BackendCommand {
@@ -17,12 +17,7 @@ pub enum BackendCommand {
         models::YankRequest,
         tokio::sync::oneshot::Sender<bool>,
     ),
-    IsVersionPublished(
-        String,
-        String,
-        String,
-        tokio::sync::oneshot::Sender<bool>,
-    ),
+    IsVersionPublished(String, String, String, tokio::sync::oneshot::Sender<bool>),
 }
 
 pub enum StorageCommand {
@@ -55,11 +50,7 @@ pub trait Backend {
         current_sha: &str,
     ) -> Result<(), reqwest::Error>;
 
-    async fn delete_branch(
-        &self,
-        token: &str,
-        branch_name: &str,
-    ) -> Result<(), reqwest::Error>;
+    async fn delete_branch(&self, token: &str, branch_name: &str) -> Result<(), reqwest::Error>;
 
     async fn create_pull_request(
         &self,
@@ -68,17 +59,9 @@ pub trait Backend {
         branch_name: &str,
     ) -> Result<u64, reqwest::Error>;
 
-    async fn merge_pull_request(
-        &self,
-        token: &str,
-        id: u64,
-    ) -> Result<(), reqwest::Error>;
+    async fn merge_pull_request(&self, token: &str, id: u64) -> Result<(), reqwest::Error>;
 
-    async fn delete_pull_request(
-        &self,
-        token: &str,
-        id: u64,
-    ) -> Result<(), reqwest::Error>;
+    async fn delete_pull_request(&self, token: &str, id: u64) -> Result<(), reqwest::Error>;
 }
 
 #[async_trait]
@@ -162,7 +145,9 @@ impl<T: Backend + Sync + Send + 'static> BackendService<T> {
                             }
                         }
                         BackendCommand::IsVersionPublished(token, name, version, sender) => {
-                            match is_published::execute(&self.backend, &token, &name, &version).await {
+                            match is_published::execute(&self.backend, &token, &name, &version)
+                                .await
+                            {
                                 Ok(result) => {
                                     if sender.send(result).is_err() {
                                         tracing::error!("Failed to send isPublished result!");

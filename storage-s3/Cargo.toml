@@ -1,6 +1,6 @@
 [package]
 name = "cargolifter-storage-s3"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 
 
@@ -15,9 +15,9 @@ readme = "README.md"
 
 [dependencies]
 async-trait = "0.1"
-aws-config = "0.0.26-alpha"
-aws-sdk-s3 = "0.0.26-alpha"
-aws-types = "0.0.26-alpha"
+aws-config = "0.2"
+aws-sdk-s3 = "0.2"
+aws-types = "0.2"
 bytes = "1.1"
 cargolifter-core = "0.3"
 tracing = "0.1"
