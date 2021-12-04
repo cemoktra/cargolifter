@@ -19,8 +19,14 @@ pub async fn publish(
         }
     };
 
-
-    if is_version_published(backend.0.clone(), &request.meta.name, &request.meta.vers, token).await? {
+    if is_version_published(
+        backend.0.clone(),
+        &request.meta.name,
+        &request.meta.vers,
+        token,
+    )
+    .await?
+    {
         // TODO: return 200 with json like
         // {
         //     // Array of errors to display to the user.
@@ -56,11 +62,17 @@ async fn is_version_published(
 ) -> Result<bool, axum::http::StatusCode> {
     let (tx, rx) = tokio::sync::oneshot::channel::<bool>();
 
-    match storage.send(BackendCommand::IsVersionPublished(token.into(), crate_name.into(), crate_version.into(), tx)).await {
+    match storage
+        .send(BackendCommand::IsVersionPublished(
+            token.into(),
+            crate_name.into(),
+            crate_version.into(),
+            tx,
+        ))
+        .await
+    {
         Ok(_) => match rx.await {
-            Ok(result) => {
-                Ok(result)
-            }
+            Ok(result) => Ok(result),
             Err(e) => {
                 tracing::error!("Failed to receive storage response: {}", e);
                 Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
